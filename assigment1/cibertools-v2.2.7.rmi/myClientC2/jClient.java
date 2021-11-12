@@ -31,6 +31,8 @@ import javax.xml.parsers.SAXParser;
 
 import ciberIF.*;
 
+enum Cord {UP, DOWN, LEFT, RIGHT}
+
 /**
  * the map
  */
@@ -52,7 +54,6 @@ class Map {
             Arrays.fill(labMap[r], ' ');
         }
     }
-
 };
 
 /**
@@ -111,6 +112,85 @@ class MapHandler extends DefaultHandler {
     }
 };
 
+class MyMap {
+    static final int CELLROWS = 7 * 2;
+    static final int CELLCOLS = 14 * 2;
+
+    /*
+     * ! In this map the center of cell (i,j), (i in 0..6, j in 0..13) is mapped to
+     * labMap[i*2][j*2]. to know if there is a wall on top of cell(i,j) (i in 0..5),
+     * check if the value of labMap[i*2+1][j*2] is space or not
+     */
+    char[][] labMap;
+
+    public MyMap() {
+        labMap = new char[CELLCOLS * 2 - 1][CELLROWS * 2 - 1];
+
+        for (int r = 0; r < labMap.length; r++) {
+            Arrays.fill(labMap[r], ' ');
+        }
+    }
+
+    // The positions must be given between (0 and CELLROWS) and (0 and CELLCOLS)
+    public void addObstacle(int xPos, int yPos, Cord cord) {
+        switch(cord) {
+            case UP:
+                labMap[(CELLCOLS - 1) + (yPos - 1)][(CELLROWS - 1) + xPos] = '-'; // Adds '-' to the top of the position (yPos - 1)
+                break;
+            case DOWN:
+                labMap[(CELLCOLS - 1) + (yPos + 1)][(CELLROWS - 1) + xPos] = '-'; // Adds '-' to the bottom of the position (yPos + 1)
+                break;
+            case LEFT:
+                labMap[(CELLCOLS - 1) + yPos][(CELLROWS - 1) + (xPos - 1)] = '|'; // Adds '|' to the left of the position (xPos - 1)
+                break;
+            case RIGHT:
+                labMap[(CELLCOLS - 1) + yPos][(CELLROWS - 1) + (xPos + 1)] = '|'; // Adds '|' to the right of the position (xPos + 1)
+                break;
+        }
+    }
+
+    public void addFree(int xPos, int yPos, Cord cord) {
+        switch(cord) {
+            case UP:
+                labMap[(CELLCOLS - 1) + (yPos - 1)][(CELLROWS - 1) + xPos] = 'X'; // Adds 'X' to the top of the position (yPos - 1)
+                break;
+            case DOWN:
+                labMap[(CELLCOLS - 1) + (yPos + 1)][(CELLROWS - 1) + xPos] = 'X'; // Adds 'X' to the bottom of the position (yPos + 1)
+                break;
+            case LEFT:
+                labMap[(CELLCOLS - 1) + yPos][(CELLROWS - 1) + (xPos - 1)] = 'X'; // Adds 'X' to the left of the position (xPos - 1)
+                break;
+            case RIGHT:
+                labMap[(CELLCOLS - 1) + yPos][(CELLROWS - 1) + (xPos + 1)] = 'X'; // Adds 'X' to the right of the position (xPos + 1)
+                break;
+        }
+    }
+
+    public boolean checkFreePath(int xPos, int yPos, Cord cord){
+        boolean response = false;
+        switch(cord) {
+            case UP:
+                if (labMap[Map.CELLCOLS + (yPos - 1)][Map.CELLROWS + xPos] == 'X') // Check if 'X' to the top of the position (yPos - 1)
+                    response = true;
+                break;
+            case DOWN:
+                if (labMap[Map.CELLCOLS + (yPos + 1)][Map.CELLROWS + xPos] == 'X') // Check if 'X' to the top of the position (yPos + 1)
+                    response = true;
+                break;
+            case LEFT:
+                if (labMap[Map.CELLCOLS + yPos][Map.CELLROWS + (xPos - 1)] == 'X') // Check if 'X' to the top of the position (xPos - 1)
+                    response = true;
+                break;
+            case RIGHT:
+                if (labMap[Map.CELLCOLS + yPos][Map.CELLROWS + (xPos + 1)] == 'X') // Check if 'X' to the top of the position (xPos + 1)
+                    response = true;
+                break;
+        }
+        return response;
+    }
+
+};
+
 /**
  * example of a basic agent implemented using the java interface library.
  */
@@ -121,6 +201,10 @@ public class jClient {
 
     enum State {
         RUN, FINISH
+    }
+
+    enum Move {
+        UP, DOWN, RIGHT, LEFT, NONE
     }
 
     public static void main(String[] args) {
@@ -183,7 +267,8 @@ public class jClient {
         client.robName = robName;
 
         // register robot in simulator
-        client.cif.InitRobot(robName, pos, host);
+        double[] sensorAngle = {0, -90, 90, 180};
+        client.cif.InitRobot2(robName, pos, sensorAngle, host);
         client.map = map;
         client.printMap();
 
@@ -204,12 +289,7 @@ public class jClient {
     public void mainLoop() {
 
         // create empty map
-        myMap = new char[27][55];
-        for (int i = 0; i < myMap.length; i++) {
-            for (int j = 0; j < myMap.length; j++) {
-                myMap[i][j] = '!';
-            }
-        }
+        myMap = new MyMap();
         posToView = new LinkedList<>();
 
         // read first position
@@ -218,8 +298,9 @@ public class jClient {
         initGpsX = (int) (cif.GetX());
         initGpsY = (int) (cif.GetY());
 
-        nextPosX = 14;
-        nextPosY = 26;
+        nextMove = Move.NONE;
+        gpsX = 0;
+        gpsY = 0;
 
         while (true) {
             cif.ReadSensors();
@@ -228,272 +309,168 @@ public class jClient {
     }
 
     private int getGpsX() {
-        return (int) (cif.GetX()) - initGpsX + 13;
+        return (int) (cif.GetX()) - initGpsX;
     }
 
     private int getGpsY() {
-        return (int) (cif.GetY()) - initGpsY + 26;
+        return (int) (cif.GetY()) - initGpsY;
     }
 
     private void discoverMap() {
-        int moveX = 0, moveY = 0;
-
-        if (-3 < compass && compass < 3) {
-            if(irSensor0 > 2) {
-                myMap[gpsX++][gpsY] = '|';
+        if ((-3 < compass && compass < 3 && irSensor0 >= 1.3) ||
+            (87 < compass && compass < 93 && irSensor1 >= 1.3) ||
+            (-93 < compass && compass < -87 && irSensor2 >= 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor3 >= 1.3)) {
+                myMap.addObstacle(gpsX, gpsY, Cord.RIGHT);
+        } else if ((-3 < compass && compass < 3 && irSensor0 < 1.3) ||
+            (87 < compass && compass < 93 && irSensor1 < 1.3) ||
+            (-93 < compass && compass < -87 && irSensor2 < 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor3 < 1.3)) {
+            if (nextMove.equals(Move.NONE) && !myMap.checkFreePath(gpsX, gpsY, Cord.RIGHT)) {
+                nextMove = Move.RIGHT;
+                myMap.addFree(gpsX, gpsY, Cord.RIGHT);
             } else {
-                // move in front :DEFAULT
-                moveX++;
-                myMap[gpsX++][gpsY] = ' ';
-            }
-            if(irSensor1 > 2) {
-                myMap[gpsX][gpsY++] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY++;
-                else {
-                    double[] pos = {gpsX, gpsY++};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY++] = ' ';
-            }
-            if(irSensor2 > 2) {
-                myMap[gpsX][gpsY--] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY--;
-                else {
-                    double[] pos = {gpsX, gpsY--};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY--] = ' ';
-            }
-            if(irSensor3 > 2) {
-                myMap[gpsX--][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX--;
-                else {
-                    double[] pos = {gpsX--, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX--][gpsY] = ' ';
-            }
-        } else if (87 < compass && compass < 93) {
-            if(irSensor0 > 2) {
-                myMap[gpsX][gpsY--] = '-';
-            } else {
-                // move in front :DEFAULT
-                moveY--;
-                myMap[gpsX][gpsY--] = ' ';
-            }
-            if(irSensor1 > 2) {
-                myMap[gpsX++][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX++;
-                else {
-                    double[] pos = {gpsX++, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX++][gpsY] = ' ';
-            }
-            if(irSensor2 > 2) {
-                myMap[gpsX--][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX--;
-                else {
-                    double[] pos = {gpsX--, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX--][gpsY] = ' ';
-            }
-            if(irSensor3 > 2) {
-                myMap[gpsX][gpsY++] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY++;
-                else {
-                    double[] pos = {gpsX, gpsY++};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY++] = ' ';
-            }
-        } else if (-93 < compass && compass < -87) {
-            if(irSensor0 > 2) {
-                myMap[gpsX][gpsY++] = '-';
-            } else {
-                // move in front :DEFAULT
-                moveY++;
-                myMap[gpsX][gpsY++] = ' ';
-            }
-            if(irSensor1 > 2) {
-                myMap[gpsX--][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX--;
-                else {
-                    double[] pos = {gpsX--, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX--][gpsY] = ' ';
-            }
-            if(irSensor2 > 2) {
-                myMap[gpsX++][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX++;
-                else {
-                    double[] pos = {gpsX++, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX++][gpsY] = ' ';
-            }
-            if(irSensor3 > 2) {
-                myMap[gpsX][gpsY--] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY--;
-                else {
-                    double[] pos = {gpsX, gpsY--};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY--] = ' ';
-            }
-        } else if(-177 > compass || compass > 177){
-            if(irSensor0 > 2) {
-                myMap[gpsX--][gpsY] = '|';
-            } else {
-                // move in front :DEFAULT
-                moveX--;
-                myMap[gpsX--][gpsY] = ' ';
-            }
-            if(irSensor1 > 2) {
-                myMap[gpsX][gpsY--] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY--;
-                else {
-                    double[] pos = {gpsX, gpsY--};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY--] = ' ';
-            }
-            if(irSensor2 > 2) {
-                myMap[gpsX][gpsY++] = '-';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveY++;
-                else {
-                    double[] pos = {gpsX, gpsY++};
-                    posToView.add(pos);
-                }
-                myMap[gpsX][gpsY++] = ' ';
-            }
-            if(irSensor3 > 2) {
-                myMap[gpsX++][gpsY] = '|';
-            } else {
-                if (moveX == 0 && moveY == 0)
-                    moveX++;
-                else {
-                    double[] pos = {gpsX++, gpsY};
-                    posToView.add(pos);
-                }
-                myMap[gpsX++][gpsY] = ' ';
+                double[] pos = {gpsX + 1, gpsY};
+                posToView.add(pos);
             }
         }
-    
-        if (moveX == 0 && moveY == 0) {
+        if ((-3 < compass && compass < 3 && irSensor1 >= 1.3) ||
+            (87 < compass && compass < 93 && irSensor3 >= 1.3) ||
+            (-93 < compass && compass < -87 && irSensor0 >= 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor2 >= 1.3)) {
+                myMap.addObstacle(gpsX, gpsY, Cord.UP);
+        } else if ((-3 < compass && compass < 3 && irSensor1 < 1.3) ||
+            (87 < compass && compass < 93 && irSensor3 < 1.3) ||
+            (-93 < compass && compass < -87 && irSensor0 < 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor2 < 1.3)) {
+            if (nextMove.equals(Move.NONE) && !myMap.checkFreePath(gpsX, gpsY, Cord.UP)) {
+                nextMove = Move.UP;
+                myMap.addFree(gpsX, gpsY, Cord.UP);
+            } else {
+                double[] pos = {gpsX, gpsY + 1};
+                posToView.add(pos);
+            }
+        }
+        if ((-3 < compass && compass < 3 && irSensor2 >= 1.3) ||
+            (87 < compass && compass < 93 && irSensor0 >= 1.3) ||
+            (-93 < compass && compass < -87 && irSensor3 >= 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor1 >= 1.3)) {
+                myMap.addObstacle(gpsX, gpsY, Cord.DOWN);
+        } else if ((-3 < compass && compass < 3 && irSensor2 < 1.3) ||
+            (87 < compass && compass < 93 && irSensor0 < 1.3) ||
+            (-93 < compass && compass < -87 && irSensor3 < 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor1 < 1.3)) {
+            if (nextMove.equals(Move.NONE) && !myMap.checkFreePath(gpsX, gpsY, Cord.DOWN)) {
+                nextMove = Move.DOWN;
+                myMap.addFree(gpsX, gpsY, Cord.DOWN);
+            } else {
+                double[] pos = {gpsX, gpsY - 1};
+                posToView.add(pos);
+            }
+        }
+        if ((-3 < compass && compass < 3 && irSensor3 >= 1.3) ||
+            (87 < compass && compass < 93 && irSensor2 >= 1.3) ||
+            (-93 < compass && compass < -87 && irSensor1 >= 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor0 >= 1.3)) {
+                myMap.addObstacle(gpsX, gpsY, Cord.LEFT);
+        } else if ((-3 < compass && compass < 3 && irSensor3 < 1.3) ||
+            (87 < compass && compass < 93 && irSensor2 < 1.3) ||
+            (-93 < compass && compass < -87 && irSensor1 < 1.3) ||
+            ((-177 > compass || compass > 177) && irSensor0 < 1.3)) {
+            if (nextMove.equals(Move.NONE) && !myMap.checkFreePath(gpsX, gpsY, Cord.LEFT)) {
+                nextMove = Move.LEFT;
+                myMap.addFree(gpsX, gpsY, Cord.LEFT);
+            } else {
+                double[] pos = {gpsX - 1, gpsY};
+                posToView.add(pos);
+            }
+        }
+
+        if (nextMove.equals(Move.NONE)) {
             //apply A*
         }
-
-        nextPosX = gpsX + moveX;
-        nextPosY = gpsY + moveY;
     }
 
     public void wander() {
-        int moveX = nextPosX - gpsX - 13;
-        int moveY = nextPosY - gpsY - 26;
-        double angle = compass;
+        double angle = 0;
 
         // rotate 180
-        if ((moveX == 1 && -177 > compass) || 
-            (moveX == -1 && (-3 < compass && compass <= 0)) ||
-            (moveY == 1 && (-93 < compass && compass < -87))) {
-            angle += 180;
-            double rot = Math.toRadians(angle);
-            while (rot <= 0) {
-                if(rot > 0.3)
-                    cif.DriveMotors(-0.15, +0.15);
-                else
-                    cif.DriveMotors(-(rot/2), +(rot/2));
-                rot -= 0.3;
-            }
-        }
-        // rotate -180
-        else if ((moveX == 1 && compass > 177) || 
-            (moveX == -1 && (0 < compass && compass < 3)) ||
-            (moveY == -1 && (87 < compass && compass < 93))) {
-            angle -= 180;
-            double rot = Math.toRadians(angle);
-            while (rot <= 0) {
-                if(rot > 0.3)
-                    cif.DriveMotors(-0.15, +0.15);
-                else
-                    cif.DriveMotors(-(rot/2), +(rot/2));
-                rot -= 0.3;
-            }
+        if ((nextMove.equals(Move.RIGHT) && (-177 > compass || compass > 177)) || 
+            (nextMove.equals(Move.LEFT) && (-3 < compass && compass < 3)) ||
+            (nextMove.equals(Move.DOWN) && (-93 < compass && compass < -87)) ||
+            (nextMove.equals(Move.UP) && (87 < compass && compass < 93))) {
+            angle = 180;
         }
         // rotate 90
-        else if ((moveX == 1 && (-93 < compass && compass < -87)) || 
-            (moveX == -1 && (87 < compass && compass < 93)) ||
-            (moveY == 1 && (-3 < compass && compass < 3)) ||
-            (moveY == -1 && (-177 > compass || compass > 177))) {
-            angle += 90;
-            double rot = Math.toRadians(angle);
-            while (rot <= 0) {
-                if(rot > 0.3)
-                    cif.DriveMotors(+0.15, -0.15);
-                else
-                    cif.DriveMotors(+(rot/2), -(rot/2));
-                rot -= 0.3;
-            }
+        else if ((nextMove.equals(Move.RIGHT) && (-93 < compass && compass < -87)) || 
+            (nextMove.equals(Move.LEFT) && (87 < compass && compass < 93)) ||
+            (nextMove.equals(Move.DOWN) && (-3 < compass && compass < 3)) ||
+            (nextMove.equals(Move.UP) && (-177 > compass || compass > 177))) {
+            angle = 90;
         }
         // rotate -90
-        else if ((moveX == 1 && (87 < compass && compass < 93)) || 
-            (moveX == -1 && (-93 < compass && compass < -87)) ||
-            (moveY == 1 && (-177 > compass || compass > 177)) ||
-            (moveY == -1 && (-3 < compass && compass < 3))) {
-                angle -= 90;
+        else if ((nextMove.equals(Move.RIGHT) && (87 < compass && compass < 93)) || 
+            (nextMove.equals(Move.LEFT) && (-93 < compass && compass < -87)) ||
+            (nextMove.equals(Move.DOWN) && (-177 > compass || compass > 177)) ||
+            (nextMove.equals(Move.UP) && (-3 < compass && compass < 3))) {
+            angle = -90;
+        }
+
+        if (angle != 0) {
             double rot = Math.toRadians(angle);
-            while (rot >= 0) {
-                if(rot > 0.3)
-                    cif.DriveMotors(+0.15, -0.15);
-                else
-                    cif.DriveMotors(+(rot/2), -(rot/2));
-                rot += 0.3;
+            System.out.println(angle + " " + rot);
+            if (rot < 0) {
+                while (rot < 0) {
+                    if(rot < -0.3)
+                        cif.DriveMotors(-0.15, 0.15);
+                    else
+                        cif.DriveMotors(+(rot/2), -(rot/2));
+                    rot += 0.3;
+                }
+            } else {
+                while (rot > 0) {
+                    if(rot > 0.3)
+                        cif.DriveMotors(0.15, -0.15);
+                    else
+                        cif.DriveMotors(+(rot/2), -(rot/2));
+                    rot -= 0.3;
+                }
+            }
+        } else {
+            // fix compasse
+            while (compass >= 90) compass -= 90;
+            while (compass <= -90) compass += 90;
+
+            double rot = Math.toRadians(compass);
+            if (rot < 0) {
+                cif.DriveMotors(0.15 + rot, 0.15);
+            } else if (rot > 0) {
+                cif.DriveMotors(0.15, 0.15 - rot);
+            } else {
+                cif.DriveMotors(0.15, 0.15);
             }
         }
+    }
 
-        if (87 < angle && angle < 93) {
-            angle -= 90;
-        } else if (-93 < angle && angle < -87) {
-            angle += 90;
-        } else if (-177 > angle) {
-            angle += 180;
-        } else if (angle > 177) {
-            angle -= 180;
+    public void getNextPos() {
+        switch (nextMove) {
+            case RIGHT:
+                nextPosX += 2;
+                break;
+            case LEFT:
+                nextPosX -= 2;
+                break;
+            case UP:
+                nextPosY += 2;
+                break;
+            case DOWN:
+                nextPosY -= 2;
+                break;
+            default:
+                break;
         }
 
-        double rot = Math.toRadians(angle);
-        if (rot < 0) {
-            cif.DriveMotors(0.15, 0.15 - 2*rot);
-        } else if (rot > 0) {
-            cif.DriveMotors(0.15 - 2*rot, 0.15);
-        } else {
-            cif.DriveMotors(0.15, 0.15);
-        }
+        nextMove = Move.NONE;
     }
 
     /**
@@ -518,26 +495,31 @@ public class jClient {
             gpsY = getGpsY();
         }
 
-        System.out.println(gpsX + " " + gpsY + " - " + nextPosX + " " + nextPosY);
-
         switch (state) {
-        case RUN: /* Go */
-            // draw map
-            discoverMap();
+            case RUN: /* Go */
+                if (gpsX == nextPosX && gpsY == nextPosY && nextMove.equals(Move.NONE)) {
+                    // draw map
+                    discoverMap();
 
-            // move
-            wander();
+                    System.out.println(irSensor0 + " " + irSensor1 + " " + irSensor2 + " " + irSensor3 + " " + compass);
+                    System.out.println(gpsX + " " + gpsY + " - " + nextPosX + " " + nextPosY + " " + nextMove);
+                }
 
-            // time out
-            if (cif.GetTime() >= 5000){
-                state = State.FINISH;
+                // move
+                wander();
+
+                // getNextPos
+                getNextPos();
+
+                // time out
+                if (cif.GetTime() >= 200){
+                    state = State.FINISH;
+                }
+                break;
+            case FINISH:
                 writeMap();
-            }
-            break;
-        case FINISH:
-            writeMap();
-            System.exit(0);
-            break;
+                System.exit(0);
+                break;
         }
     }
 
@@ -556,7 +538,7 @@ public class jClient {
     }
 
     public void writeMap() {
-        for (char[] cs : myMap) {
+        for (char[] cs : myMap.labMap) {
             for (char c : cs) {
                 System.out.print(c);
             }
@@ -569,5 +551,6 @@ public class jClient {
     private int gpsX, gpsY, initGpsX, initGpsY, nextPosX, nextPosY;
     private State state;
     private Queue<double[]> posToView;
-    private char[][] myMap;
+    private MyMap myMap;
+    private Move nextMove;
 }
