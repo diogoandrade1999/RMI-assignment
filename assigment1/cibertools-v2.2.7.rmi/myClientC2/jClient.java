@@ -198,6 +198,8 @@ public class jClient {
 
     ciberIF cif;
     Map map;
+    int orientation = 0;
+    boolean inRotation = false;
 
     enum State {
         RUN, FINISH
@@ -394,61 +396,56 @@ public class jClient {
     public void wander() {
         double angle = 0;
 
-        // rotate 180
-        if ((nextMove.equals(Move.RIGHT) && (-177 > compass || compass > 177)) || 
-            (nextMove.equals(Move.LEFT) && (-3 < compass && compass < 3)) ||
-            (nextMove.equals(Move.DOWN) && (-93 < compass && compass < -87)) ||
-            (nextMove.equals(Move.UP) && (87 < compass && compass < 93))) {
-            angle = 180;
-        }
-        // rotate 90
-        else if ((nextMove.equals(Move.RIGHT) && (-93 < compass && compass < -87)) || 
-            (nextMove.equals(Move.LEFT) && (87 < compass && compass < 93)) ||
-            (nextMove.equals(Move.DOWN) && (-3 < compass && compass < 3)) ||
-            (nextMove.equals(Move.UP) && (-177 > compass || compass > 177))) {
-            angle = 90;
-        }
-        // rotate -90
-        else if ((nextMove.equals(Move.RIGHT) && (87 < compass && compass < 93)) || 
-            (nextMove.equals(Move.LEFT) && (-93 < compass && compass < -87)) ||
-            (nextMove.equals(Move.DOWN) && (-177 > compass || compass > 177)) ||
-            (nextMove.equals(Move.UP) && (-3 < compass && compass < 3))) {
-            angle = -90;
+        switch (nextMove){
+            case UP:
+                angle = 90;
+                break;
+            case DOWN:
+                angle = -90;
+                break;
+            case LEFT:
+                angle = 180;
+                break;
+            case RIGHT:
+                angle = 0;
+                break;
+            default:
+                angle = orientation;
+                break;
         }
 
-        if (angle != 0) {
-            double rot = Math.toRadians(angle);
-            System.out.println(angle + " " + rot);
-            if (rot < 0) {
-                while (rot < 0) {
-                    if(rot < -0.3)
-                        cif.DriveMotors(-0.15, 0.15);
-                    else
-                        cif.DriveMotors(+(rot/2), -(rot/2));
-                    rot += 0.3;
-                }
-            } else {
-                while (rot > 0) {
-                    if(rot > 0.3)
+        if (angle != orientation)
+        {
+            inRotation = true;
+            angle = angle - orientation;
+            if (angle == -270)
+                angle = 90;
+            if (angle == 270)
+                angle = -90;
+
+            if (angle != (int)compass)
+            {
+                double rot = (Math.toRadians(angle) - Math.toRadians(compass));
+                //System.out.println(rot);
+                if (rot < 0) {
+                    if(rot > -0.3)
                         cif.DriveMotors(0.15, -0.15);
                     else
                         cif.DriveMotors(+(rot/2), -(rot/2));
-                    rot -= 0.3;
+                    //cif.DriveMotors(0.15, -0.15);
+                } else {
+                    if(rot > 0.3)
+                        cif.DriveMotors(-0.15, 0.15);
+                    else
+                        cif.DriveMotors(-(rot/2), +(rot/2));
+                    //cif.DriveMotors(-0.15, 0.15);
                 }
+            }else{
+                inRotation = false;
+                orientation = (int)angle;
             }
-        } else {
-            // fix compasse
-            while (compass >= 90) compass -= 90;
-            while (compass <= -90) compass += 90;
-
-            double rot = Math.toRadians(compass);
-            if (rot < 0) {
-                cif.DriveMotors(0.15 + rot, 0.15);
-            } else if (rot > 0) {
-                cif.DriveMotors(0.15, 0.15 - rot);
-            } else {
-                cif.DriveMotors(0.15, 0.15);
-            }
+        }else{
+            cif.DriveMotors(0.15, 0.15);
         }
     }
 
@@ -484,7 +481,7 @@ public class jClient {
             irSensor1 = cif.GetObstacleSensor(1);
         if (cif.IsObstacleReady(2))
             irSensor2 = cif.GetObstacleSensor(2);
-        if (cif.IsObstacleReady(2))
+        if (cif.IsObstacleReady(3))
             irSensor3 = cif.GetObstacleSensor(3);
 
         if (cif.IsCompassReady())
@@ -507,9 +504,9 @@ public class jClient {
 
                 // move
                 wander();
-
                 // getNextPos
-                getNextPos();
+                if (!inRotation)
+                    getNextPos();
 
                 // time out
                 if (cif.GetTime() >= 200){
@@ -518,6 +515,7 @@ public class jClient {
                 break;
             case FINISH:
                 writeMap();
+                exportMap("map.out");
                 System.exit(0);
                 break;
         }
@@ -543,6 +541,29 @@ public class jClient {
                 System.out.print(c);
             }
             System.out.println();
+        }
+    }
+
+    public void exportMap(String fileName) {
+        try {
+            File myObj = new File(fileName);
+            if (myObj.createNewFile()) {
+                System.out.println("File created: " + myObj.getName());
+                FileWriter myWriter = new FileWriter(fileName);
+                for (char[] cs : myMap.labMap) {
+                    for (char c : cs) {
+                        myWriter.write(c);
+                    }
+                    myWriter.write('\n');
+                }
+                myWriter.close();
+                System.out.println("Successfully wrote to the file.");
+            } else {
+                System.out.println("File already exists.");
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
         }
     }
 
