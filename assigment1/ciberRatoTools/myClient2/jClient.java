@@ -129,11 +129,12 @@ class MyMap {
         for (int r = 0; r < labMap.length; r++) {
             Arrays.fill(labMap[r], ' ');
         }
+
+        labMap[(CELLROWS - 1)][(CELLCOLS - 1)] = 'I';
     }
 
     // The positions must be given between (0 and CELLROWS) and (0 and CELLCOLS)
     public void addObstacle(int xPos, int yPos, Cord cord) {
-        System.out.println(xPos + " " + yPos + " " + cord);
         switch(cord) {
             case UP:
                 labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] = '-'; // Adds '-' to the top of the position (yPos + 1)
@@ -151,6 +152,8 @@ class MyMap {
     }
 
     public void addFree(int xPos, int yPos, Cord cord) {
+        if (labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
+            labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = 'X';
         switch(cord) {
             case UP:
                 labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] = 'X'; // Adds 'X' to the top of the position (yPos + 1)
@@ -219,9 +222,27 @@ class MyMap {
             labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == ' ' ||
             labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == ' ')
             return false;
+        if (labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
+            labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = 'X';
         return true;
     }
 };
+
+class Tuple<X, Y> {
+
+    public final X x;
+    public final Y y;
+
+    public Tuple(X x, Y y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + "," + y + ")";
+    }
+}
 
 /**
  * example of a basic agent implemented using the java interface library.
@@ -331,7 +352,7 @@ public class jClient {
         initGpsX = cif.GetX();
         initGpsY = cif.GetY();
 
-        actualMove = Move.NONE;
+        actualMove = Move.RIGHT;
         nextMove = Move.NONE;
         gpsX = 0;
         gpsY = 0;
@@ -357,12 +378,10 @@ public class jClient {
             (87 < compass && compass < 93 && irSensor2 < 1.1) ||
             (-93 < compass && compass < -87 && irSensor1 < 1.1) ||
             ((-177 > compass || compass > 177) && irSensor3 < 1.1)) {
-            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.RIGHT)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.RIGHT)) {
+            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.RIGHT)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.RIGHT))
                 nextMove = Move.RIGHT;
-            } else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.RIGHT)) {
-                int[] pos = {nextPosX + 2, nextPosY};
-                posToView.add(pos);
-            }
+            else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.RIGHT))
+                posToView.add(new Tuple<>(nextPosX + 2, nextPosY));
             myMap.addFree(nextPosX, nextPosY, Cord.RIGHT);
         }
     }
@@ -372,12 +391,10 @@ public class jClient {
             (87 < compass && compass < 93 && irSensor1 < 1.1) ||
             (-93 < compass && compass < -87 && irSensor2 < 1.1) ||
             ((-177 > compass || compass > 177) && irSensor0 < 1.1)) {
-            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.LEFT)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.LEFT)) {
+            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.LEFT)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.LEFT))
                 nextMove = Move.LEFT;
-            } else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.LEFT)) {
-                int[] pos = {nextPosX - 2, nextPosY};
-                posToView.add(pos);
-            }
+            else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.LEFT))
+                posToView.add(new Tuple<>(nextPosX - 2, nextPosY));
             myMap.addFree(nextPosX, nextPosY, Cord.LEFT);
         }
     }
@@ -387,12 +404,10 @@ public class jClient {
             (87 < compass && compass < 93 && irSensor0 < 1.1) ||
             (-93 < compass && compass < -87 && irSensor3 < 1.1) ||
             ((-177 > compass || compass > 177) && irSensor2 < 1.1)) {
-            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.UP)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.UP)) {
+            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.UP)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.UP))
                 nextMove = Move.UP;
-            } else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.UP)) {
-                int[] pos = {nextPosX, nextPosY + 2};
-                posToView.add(pos);
-            }
+            else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.UP))
+                posToView.add(new Tuple<>(nextPosX, nextPosY + 2));
             myMap.addFree(nextPosX, nextPosY, Cord.UP);
         }
     }
@@ -402,12 +417,10 @@ public class jClient {
             (87 < compass && compass < 93 && irSensor3 < 1.1) ||
             (-93 < compass && compass < -87 && irSensor0 < 1.1) ||
             ((-177 > compass || compass > 177) && irSensor1 < 1.1)) {
-            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.DOWN)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.DOWN)) {
+            if ((nextMove.equals(Move.NONE) || nextMove.equals(Move.DOWN)) && !myMap.checkFreePos(nextPosX, nextPosY, Cord.DOWN))
                 nextMove = Move.DOWN;
-            } else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.DOWN)) {
-                int[] pos = {nextPosX, nextPosY - 2};
-                posToView.add(pos);
-            }
+            else if (!myMap.checkFreePos(nextPosX, nextPosY, Cord.DOWN))
+                posToView.add(new Tuple<>(nextPosX, nextPosY - 2));
             myMap.addFree(nextPosX, nextPosY, Cord.DOWN);
         }
     }
@@ -438,6 +451,7 @@ public class jClient {
                 myMap.addObstacle(nextPosX, nextPosY, Cord.LEFT);
         }
 
+        // continue to do the same move
         Cord cord = convertMoveToCord(actualMove);
         if (!myMap.checkObstaclePos(nextPosX, nextPosY, cord) && !myMap.checkFreePos(nextPosX, nextPosY, cord)) {
             nextMove = actualMove;
@@ -445,51 +459,81 @@ public class jClient {
 
         switch (actualMove){
             case UP:
-                moveUp();
                 moveRight();
                 moveLeft();
+                moveUp();
                 moveDown();
                 break;
             case DOWN:
-                moveDown();
                 moveRight();
                 moveLeft();
+                moveDown();
                 moveUp();
                 break;
             case LEFT:
-                moveLeft();
                 moveUp();
                 moveDown();
+                moveLeft();
                 moveRight();
                 break;
             case RIGHT:
             default:
-                moveRight();
                 moveUp();
                 moveDown();
+                moveRight();
                 moveLeft();
                 break;
         }
 
         if (nextMove.equals(Move.NONE)) {
-            searchNextPos();
+            if (posToView.isEmpty())
+                state = State.FINISH;
+            else
+                searchNextPosShortPath();
         }
     }
 
-    private void searchNextPos() {
-        if (posToView.isEmpty()) {
-            state = State.FINISH;
-            return;
+    private void searchNextPosShortPath() {
+        List<Node> choosedPath = new ArrayList<>();
+        Tuple<Integer, Integer> choosedPos = new Tuple<>(0, 0);
+        Stack<Tuple<Integer, Integer>> newPosToView = new Stack<>();
+        Node initialNode = new Node((MyMap.CELLROWS - 1) + nextPosY, (MyMap.CELLCOLS - 1) + nextPosX);
+        for (int i = 0; i < posToView.size(); i++) {
+            Tuple<Integer, Integer> pos = posToView.get(i);
+            int goalPosX = pos.x;
+            int goalPosY = pos.y;
+            if (!myMap.ckeckedPos(goalPosX, goalPosY)) {
+                Node finalNode = new Node((MyMap.CELLROWS - 1) + goalPosY, (MyMap.CELLCOLS - 1) + goalPosX);
+                AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
+                aStar.setBlocks(myMap.labMap);
+                List<Node> path = aStar.findPath();
+                if (path.size() > 0 && (choosedPath.size() == 0 || path.size() < choosedPath.size())) {
+                    if (choosedPos.x != 0 || choosedPos.y != 0)
+                        newPosToView.add(choosedPos);
+                    choosedPath = path;
+                    choosedPos = pos;
+                } else if (path.size() == 0 || path.size() >= choosedPath.size())
+                    newPosToView.add(pos);
+            }
         }
 
-        int[] nextPos;
+        if (choosedPath.isEmpty()) {
+            state = State.FINISH;
+        } else {
+            posToView = newPosToView;
+            for (int i = 1; i < choosedPath.size(); i++) {
+                Node node = choosedPath.get(i);
+                listNextPos.add(new Tuple<>(node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1)));
+            }
+        }
+    }
+
+    private void searchNextPosLastPos() {
+        Tuple<Integer, Integer> choosedPos;
         boolean validPos;
-        int goalPosX, goalPosY;
         do {
-            nextPos = posToView.pop();
-            goalPosX = nextPos[0];
-            goalPosY = nextPos[1];
-            validPos = !myMap.ckeckedPos(goalPosX, goalPosY);
+            choosedPos = posToView.pop();
+            validPos = !myMap.ckeckedPos(choosedPos.x, choosedPos.y);
         } while (!validPos && !posToView.isEmpty());
 
         if (!validPos) {
@@ -497,7 +541,7 @@ public class jClient {
         } else {
             //apply A*
             Node initialNode = new Node((MyMap.CELLROWS - 1) + nextPosY, (MyMap.CELLCOLS - 1) + nextPosX);
-            Node finalNode = new Node((MyMap.CELLROWS - 1) + goalPosY, (MyMap.CELLCOLS - 1) + goalPosX);
+            Node finalNode = new Node((MyMap.CELLROWS - 1) + choosedPos.y, (MyMap.CELLCOLS - 1) + choosedPos.x);
             AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
             aStar.setBlocks(myMap.labMap);
             List<Node> path = aStar.findPath();
@@ -507,10 +551,8 @@ public class jClient {
             }
             for (int i = 1; i < path.size(); i++) {
                 Node node = path.get(i);
-                int[] pos = {node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1)};
-                listNextPos.add(pos);
+                listNextPos.add(new Tuple<>(node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1)));
             }
-            System.out.println("path: " + path);
         }
     }
 
@@ -547,6 +589,10 @@ public class jClient {
                 angle = compass;
                 break;
         }
+        if (260 < angle && angle < 280)
+            angle -= 360;
+        if (-280 < angle && angle < -260)
+            angle += 360;
         return angle;
     }
 
@@ -573,14 +619,14 @@ public class jClient {
     }
 
     private void getNextMove() {
-        int[] pos = listNextPos.poll();
-        if (nextPosX + 2 == pos[0])
+        Tuple<Integer, Integer> pos = listNextPos.poll();
+        if (nextPosX + 2 == pos.x)
             nextMove = Move.RIGHT;
-        else if (nextPosX - 2 == pos[0])
+        else if (nextPosX - 2 == pos.x)
             nextMove = Move.LEFT;
-        else if (nextPosY + 2 == pos[1])
+        else if (nextPosY + 2 == pos.y)
             nextMove = Move.UP;
-        else if (nextPosY - 2 == pos[1])
+        else if (nextPosY - 2 == pos.y)
             nextMove = Move.DOWN;
     }
 
@@ -609,7 +655,7 @@ public class jClient {
     private boolean closeToNextPos() {
         double angle = getAngle();
         if (((-0.3 < gpsX - nextPosX && gpsX - nextPosX <= 0.3) && (-0.3 < gpsY - nextPosY && gpsY - nextPosY <= 0.3)) ||
-            (irSensor0 >= 2 && (-3 < angle && angle < 3)))
+            (irSensor0 >= 3.3 && (-3 < angle && angle < 3)))
             return true;
         return false;
     }
@@ -642,7 +688,7 @@ public class jClient {
                     if (listNextPos.isEmpty())
                         // discover map
                         discoverMap();
-                    
+
                     if (!listNextPos.isEmpty())
                         getNextMove();
 
@@ -656,12 +702,13 @@ public class jClient {
                 wander();
 
                 // time out
-                if (cif.GetTime() >= 5000){
+                if (cif.GetTime() >= 5000)
                     state = State.FINISH;
-                }
                 break;
             case FINISH:
-                writeMap();
+                System.out.println("Time: " + (5000 - cif.GetTime()));
+                //printMyMap();
+                exportMap("map.out");
                 System.exit(0);
                 break;
         }
@@ -681,7 +728,7 @@ public class jClient {
         }
     }
 
-    public void writeMap() {
+    public void printMyMap() {
         for (int i = myMap.labMap.length - 1; i >= 0; i--) {
             for (char c : myMap.labMap[i]) {
                 System.out.print(c);
@@ -690,13 +737,33 @@ public class jClient {
         }
     }
 
+    public void exportMap(String fileName) {
+        try {
+            File myObj = new File(fileName);
+            if (myObj.createNewFile()) {
+                System.out.println("File created: " + myObj.getName());
+                FileWriter myWriter = new FileWriter(fileName);
+                for (int i = myMap.labMap.length - 1; i >= 0; i--) {
+                    for (char c : myMap.labMap[i]) {
+                        myWriter.write(c);
+                    }
+                    myWriter.write('\n');
+                }
+                myWriter.close();
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
     private String robName;
     private double irSensor0, irSensor1, irSensor2, irSensor3, compass;
     private double gpsX, gpsY, initGpsX, initGpsY;
     private int nextPosX, nextPosY;
     private State state;
-    private Stack<int[]> posToView;
+    private Stack<Tuple<Integer, Integer>> posToView;
     private MyMap myMap;
     private Move actualMove, nextMove;
-    private Queue<int[]> listNextPos;
+    private Queue<Tuple<Integer, Integer>> listNextPos;
 }

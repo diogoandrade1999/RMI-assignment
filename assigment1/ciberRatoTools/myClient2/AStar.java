@@ -26,15 +26,17 @@ public class AStar {
             }
         });
         this.closedSet = new HashSet<>();
-        this.createNodes();
+        this.createNodes(rows, cols);
     }
 
-    private void createNodes() {
-        for (int i = 0; i < searchArea.length; i++) {
-            for (int j = 0; j < searchArea[0].length; j++) {
-                Node node = new Node(i, j);
-                node.calculateHeuristic(this.finalNode);
-                this.searchArea[i][j] = node;
+    private void createNodes(int rows, int cols) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (i % 2 != 0 || j % 2 != 0) {
+                    Node node = new Node(i, j);
+                    node.calculateHeuristic(this.finalNode);
+                    this.searchArea[i][j] = node;
+                }
             }
         }
     }
@@ -42,8 +44,9 @@ public class AStar {
     public void setBlocks(char[][] map) {
         for (int row = map.length - 1; row >= 0; row--)
             for (int col = 0; col < map[row].length; col++)
-                if (map[row][col] != 'X')
-                    this.searchArea[row][col].setBlock(true);
+                if (row % 2 != 0 || col % 2 != 0)
+                    if (map[row][col] != 'X')
+                        this.searchArea[row][col].setBlock(true);
     }
 
     public List<Node> findPath() {
