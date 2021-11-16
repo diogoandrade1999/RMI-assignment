@@ -244,6 +244,23 @@ class Tuple<X, Y> {
     }
 }
 
+class Ground {
+
+    public Tuple<Integer, Integer> pos;
+    public int id;
+    public boolean founded;
+
+    public Ground(int id) {
+        this.id = id;
+        this.founded = false;
+    }
+
+    @Override
+    public String toString() {
+        return "Ground [id=" + id + ", pos=" + pos + "]";
+    }
+}
+
 /**
  * example of a basic agent implemented using the java interface library.
  */
@@ -358,6 +375,7 @@ public class jClient {
         gpsY = 0;
         nextPosX = 0;
         nextPosY = 0;
+        grounds = new Ground[]{new Ground(0), new Ground(1), new Ground(2)};
 
         while (true) {
             cif.ReadSensors();
@@ -660,6 +678,38 @@ public class jClient {
         return false;
     }
 
+    private void foundTarget() {
+        // Visit Target
+        if (ground == 0 || ground == 1 || ground == 2) {
+            grounds[ground].founded = true;
+            grounds[ground].pos = new Tuple<>(nextPosX, nextPosY);
+            if (grounds[0].founded && grounds[1].founded && grounds[2].founded) {
+                state = State.FINISH;
+
+                Node groundNode0 = new Node((MyMap.CELLROWS - 1) + grounds[0].pos.y, (MyMap.CELLCOLS - 1) + grounds[0].pos.x);
+                Node groundNode1 = new Node((MyMap.CELLROWS - 1) + grounds[1].pos.y, (MyMap.CELLCOLS - 1) + grounds[1].pos.x);
+                Node groundNode2 = new Node((MyMap.CELLROWS - 1) + grounds[2].pos.y, (MyMap.CELLCOLS - 1) + grounds[2].pos.x);
+
+                AStar aStar01 = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, groundNode0, groundNode1);
+                AStar aStar02 = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, groundNode0, groundNode2);
+                AStar aStar12 = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, groundNode1, groundNode2);
+                aStar01.setBlocks(myMap.labMap);
+                aStar02.setBlocks(myMap.labMap);
+                aStar12.setBlocks(myMap.labMap);
+
+                List<Node> path01 = aStar01.findPath();
+                List<Node> path02 = aStar02.findPath();
+                List<Node> path12 = aStar12.findPath();
+
+                System.out.println("Path 01: " + path01);
+                System.out.println("Path 02: " + path02);
+                System.out.println("Path 12: " + path12);
+                for (Ground ground : grounds)
+                    System.out.println(ground);
+            }
+        }
+    }
+
     /**
      * basic reactive decision algorithm, decides action based on current sensor
      * values
@@ -677,6 +727,9 @@ public class jClient {
         if (cif.IsCompassReady())
             compass = cif.GetCompassSensor();
 
+        if(cif.IsGroundReady())
+            ground = cif.GetGroundSensor();
+
         if (cif.IsGPSReady()) {
             gpsX = getGpsX();
             gpsY = getGpsY();
@@ -685,6 +738,9 @@ public class jClient {
         switch (state) {
             case RUN: /* Go */
                 if (closeToNextPos() && nextMove.equals(Move.NONE)) {
+                    // look for target
+                    foundTarget();
+
                     if (listNextPos.isEmpty())
                         // discover map
                         discoverMap();
@@ -709,7 +765,7 @@ public class jClient {
                 cif.Finish();
                 System.out.println("Time: " + (5000 - cif.GetTime()));
                 //printMyMap();
-                exportMap("map.out");
+                //exportMap("map.out");
                 System.exit(0);
                 break;
         }
@@ -759,12 +815,12 @@ public class jClient {
     }
 
     private String robName;
-    private double irSensor0, irSensor1, irSensor2, irSensor3, compass;
-    private double gpsX, gpsY, initGpsX, initGpsY;
-    private int nextPosX, nextPosY;
+    private double irSensor0, irSensor1, irSensor2, irSensor3, compass, gpsX, gpsY, initGpsX, initGpsY;
+    private int ground, nextPosX, nextPosY;
     private State state;
     private Stack<Tuple<Integer, Integer>> posToView;
+    private Queue<Tuple<Integer, Integer>> listNextPos;
     private MyMap myMap;
     private Move actualMove, nextMove;
-    private Queue<Tuple<Integer, Integer>> listNextPos;
+    private Ground[] grounds;
 }

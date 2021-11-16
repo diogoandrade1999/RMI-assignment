@@ -216,7 +216,6 @@ public class jClient {
     public void wander() {
         // rotate with motors going inverse
         if (irSensor0 > 1.3) {
-            // System.out.println("rotate");
             boolean rLeft = false;
             double rot = 0.15;
             for (int i = 0; i < 3; i++) {
@@ -235,19 +234,15 @@ public class jClient {
             }
         }
 
-        // rotate with one motor
-        /*
-         * else if (irSensor0 > 1 && irSensor1 + irSensor2 > 5) {
-         * //System.out.println("rotate"); boolean rLeft = false; double rot = 0.15; for
-         * (int i = 0; i < 6; i++) { if (i == 0) if (irSensor1 > irSensor2) rLeft =
-         * false; else rLeft = true; else if (i == 6) rot = 0.05;
-         * 
-         * if (!rLeft) cif.DriveMotors(+rot, 0); else cif.DriveMotors(0, +rot); } }
-         */
-
+        // warning fix position
+        else if(irSensor1 > 5.0 || irSensor2 > 5.0)
+            if (irSensor1 > irSensor2)
+                cif.DriveMotors(+0.15, +0.05);
+            else
+                cif.DriveMotors(+0.05, +0.15);
+            
         // fix position
         else if (irSensor1 > 3.3 || irSensor2 > 3.3) {
-            // System.out.println("fix pos");
             if (irSensor1 > irSensor2)
                 cif.DriveMotors(+0.15, +0.12);
             else
@@ -294,6 +289,7 @@ public class jClient {
                 state = State.FINISH;
             break;
         case FINISH:
+            cif.Finish();
             System.exit(0);
             break;
         }
