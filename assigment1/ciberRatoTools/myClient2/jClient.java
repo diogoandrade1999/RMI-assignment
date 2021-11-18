@@ -365,14 +365,6 @@ public class jClient {
         }
     }
 
-    private double getGpsX() {
-        return cif.GetX() - initGpsX;
-    }
-
-    private double getGpsY() {
-        return cif.GetY() - initGpsY;
-    }
-
     private void moveRight() {
         if ((-3 < compass && compass < 3 && irSensor0 < 1.1) ||
             (87 < compass && compass < 93 && irSensor2 < 1.1) ||
@@ -678,8 +670,8 @@ public class jClient {
             compass = cif.GetCompassSensor();
 
         if (cif.IsGPSReady()) {
-            gpsX = getGpsX();
-            gpsY = getGpsY();
+            gpsX = cif.GetX() - initGpsX;
+            gpsY = cif.GetY() - initGpsY;
         }
 
         switch (state) {
@@ -706,8 +698,8 @@ public class jClient {
                     state = State.FINISH;
                 break;
             case FINISH:
+                System.out.println("Time: " + cif.GetTime());
                 cif.Finish();
-                System.out.println("Time: " + (5000 - cif.GetTime()));
                 //printMyMap();
                 exportMap("map.out");
                 System.exit(0);
@@ -743,15 +735,15 @@ public class jClient {
             File myObj = new File(fileName);
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
-                FileWriter myWriter = new FileWriter(fileName);
-                for (int i = myMap.labMap.length - 1; i >= 0; i--) {
-                    for (char c : myMap.labMap[i]) {
-                        myWriter.write(c);
-                    }
-                    myWriter.write('\n');
-                }
-                myWriter.close();
             }
+            FileWriter myWriter = new FileWriter(fileName);
+            for (int i = myMap.labMap.length - 1; i >= 0; i--) {
+                for (char c : myMap.labMap[i]) {
+                    myWriter.write(c);
+                }
+                myWriter.write('\n');
+            }
+            myWriter.close();
         } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();

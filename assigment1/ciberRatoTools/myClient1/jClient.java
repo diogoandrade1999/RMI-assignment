@@ -198,7 +198,8 @@ public class jClient {
 
         ground = -1;
         lastTime = 0;
-        inGround = false;
+        inGround = true;
+        countLaps = 0;
         state = State.RUN;
     }
 
@@ -270,14 +271,22 @@ public class jClient {
             ground = cif.GetGroundSensor();
 
         switch (state) {
-        case RUN: /* Go */
-            if (ground == 0) { /* Visit First Target */
+        case RUN:
+            // visit first target
+            if (ground == 0) {
                 if (!inGround) {
+                    countLaps++;
                     double time = cif.GetTime();
-                    System.out.println(robName + " visited target at " + time + " lap time: " + (time - lastTime));
+                    System.out.println("Lap: " + countLaps + " - Lap Time: " + (time - lastTime));
                     lastTime = time;
                 }
                 inGround = true;
+
+                // complete goal
+                if (countLaps == 10) {
+                    state = State.FINISH;
+                    break;
+                } 
             } else
                 inGround = false;
 
@@ -290,6 +299,7 @@ public class jClient {
             break;
         case FINISH:
             cif.Finish();
+            System.out.println("Complete " + countLaps + " laps - Total Time: " + lastTime + " - Average Time: " + (lastTime / countLaps));
             System.exit(0);
             break;
         }
@@ -311,7 +321,7 @@ public class jClient {
 
     private String robName;
     private double irSensor0, irSensor1, irSensor2, lastTime;
-    private int ground;
+    private int ground, countLaps;
     private boolean inGround;
     private State state;
 };

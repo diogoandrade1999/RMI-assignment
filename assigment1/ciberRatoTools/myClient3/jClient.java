@@ -799,15 +799,15 @@ public class jClient {
             File myObj = new File(fileName);
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
-                FileWriter myWriter = new FileWriter(fileName);
-                for (int i = myMap.labMap.length - 1; i >= 0; i--) {
-                    for (char c : myMap.labMap[i]) {
-                        myWriter.write(c);
-                    }
-                    myWriter.write('\n');
-                }
-                myWriter.close();
             }
+            FileWriter myWriter = new FileWriter(fileName);
+            for (int i = myMap.labMap.length - 1; i >= 0; i--) {
+                for (char c : myMap.labMap[i]) {
+                    myWriter.write(c);
+                }
+                myWriter.write('\n');
+            }
+            myWriter.close();
         } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
