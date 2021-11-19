@@ -111,10 +111,6 @@ public abstract class Client {
 
             // move
             this.wander();
-
-            // time out
-            if (this.getCiberIF().GetTime() >= 5000)
-                this.setState(State.FINISH);
             break;
         case FINISH:
             this.getCiberIF().Finish();
