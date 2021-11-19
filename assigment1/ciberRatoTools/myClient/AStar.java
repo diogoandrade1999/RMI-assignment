@@ -53,11 +53,11 @@ public class AStar {
      * 
      * @param map mapped area
      */
-    public void setBlocks(char[][] map) {
+    public void setBlocks(char[][] map, List<Character> blockers) {
         for (int row = map.length - 1; row >= 0; row--)
             for (int col = 0; col < map[row].length; col++)
                 if (row % 2 != 0 || col % 2 != 0)
-                    if (map[row][col] != 'X')
+                    if (blockers.contains(map[row][col]))
                         this.searchArea[row][col].setBlock(true);
     }
 

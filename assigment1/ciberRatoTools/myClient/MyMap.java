@@ -1,7 +1,5 @@
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 
 /**
  * My Custom Map
@@ -9,6 +7,8 @@ import java.util.Arrays;
  */
 public class MyMap {
 
+    public static final List<Character> BLOCKERS_ALL = Arrays.asList(' ', '-', '|');
+    public static final List<Character> BLOCKERS_WALLS = Arrays.asList('-', '|');
     public static final int CELLROWS = 14;
     public static final int CELLCOLS = 28;
     private char[][] labMap;
@@ -200,7 +200,18 @@ public class MyMap {
             myWriter.close();
         } catch (IOException e) {
             System.out.println("An error occurred.");
-            e.printStackTrace();
+            System.exit(1);
         }
+    }
+
+    @Override
+    public String toString() {
+        String draw = "";
+        for (int i = this.labMap.length - 1; i >= 0; i--) {
+            for (char c : this.labMap[i])
+                draw += c;
+            draw += '\n';
+        }
+        return draw;
     }
 };

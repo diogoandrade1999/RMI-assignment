@@ -6,9 +6,10 @@ import java.util.*;
  */
 public class ClientC2 extends Client {
 
+    private static final double[] SENSORS_ANGLES = { 0, 90, -90, 180 };
     private static final double THRESHHOLD_SENSORS = 1.1;
+    private final double initGpsX, initGpsY;
     private double irSensor0, irSensor1, irSensor2, irSensor3, compass, gpsX, gpsY;
-    public double initGpsX, initGpsY;
     private int nextPosX, nextPosY;
     private Move actualMove, nextMove;
     private Stack<Tuple<Integer, Integer>> posToView;
@@ -16,8 +17,16 @@ public class ClientC2 extends Client {
     private MyMap myMap;
 
     // Construtor
-    public ClientC2(double[] sensorsAngle) {
-        super(sensorsAngle);
+    public ClientC2(String[] args) {
+        super(args, SENSORS_ANGLES);
+
+        // read first position
+        do {
+            this.getCiberIF().ReadSensors();
+        } while (!this.getCiberIF().IsGPSReady());
+
+        this.initGpsX = this.getCiberIF().GetX();
+        this.initGpsY = this.getCiberIF().GetY();
 
         this.gpsX = 0;
         this.gpsY = 0;
@@ -28,6 +37,22 @@ public class ClientC2 extends Client {
         this.posToView = new Stack<>();
         this.listNextPos = new LinkedList<>();
         this.myMap = new MyMap();
+    }
+
+    public Move getNextMove() {
+        return this.nextMove;
+    }
+
+    public Tuple<Integer, Integer> getNextPos() {
+        return new Tuple<>(this.nextPosX, this.nextPosY);
+    }
+
+    public Stack<Tuple<Integer, Integer>> getPosToView() {
+        return this.posToView;
+    }
+
+    public MyMap getMyMap() {
+        return this.myMap;
     }
 
     @Override
@@ -85,19 +110,8 @@ public class ClientC2 extends Client {
     }
 
     public static void main(String[] args) {
-        double[] sensorsAngle = { 0, 90, -90, 180 };
-
         // create client
-        ClientC2 client = new ClientC2(sensorsAngle);
-        client.commandLineValidate(args);
-
-        // read first position
-        do {
-            client.getCiberIF().ReadSensors();
-        } while (!client.getCiberIF().IsGPSReady());
-
-        client.initGpsX = client.getCiberIF().GetX();
-        client.initGpsY = client.getCiberIF().GetY();
+        Client client = new ClientC2(args);
 
         // main loop
         client.mainLoop();
@@ -143,9 +157,10 @@ public class ClientC2 extends Client {
      * 
      * @return true if the agent is in the intended position, otherwise false
      */
-    private boolean closeToNextPos() {
+    public boolean closeToNextPos() {
         double angle = this.getAngle();
-        if (((-0.3 < gpsX - nextPosX && gpsX - nextPosX <= 0.3) && (-0.3 < gpsY - nextPosY && gpsY - nextPosY <= 0.3))
+        if (((-0.25 < gpsX - nextPosX && gpsX - nextPosX <= 0.25)
+                && (-0.25 < gpsY - nextPosY && gpsY - nextPosY <= 0.25))
                 || (irSensor0 >= 3.3 && (-3 < angle && angle < 3)))
             return true;
         return false;
@@ -207,7 +222,7 @@ public class ClientC2 extends Client {
         // if does not find any possible move
         if (this.nextMove.equals(Move.NONE)) {
             if (this.posToView.isEmpty())
-                this.setState(State.FINISH);
+                this.changeState();
             else
                 this.searchNextPosShortPath();
         }
@@ -263,7 +278,7 @@ public class ClientC2 extends Client {
             if (!this.myMap.ckeckedPos(pos.x, pos.y)) {
                 Node finalNode = new Node((MyMap.CELLROWS - 1) + pos.y, (MyMap.CELLCOLS - 1) + pos.x);
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
-                aStar.setBlocks(this.myMap.getLabMap());
+                aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
                 List<Node> path = aStar.findPath();
                 if (path.size() > 0 && (choosedPath.size() == 0 || path.size() < choosedPath.size())) {
                     if (choosedPos.x != 0 || choosedPos.y != 0)
@@ -276,13 +291,12 @@ public class ClientC2 extends Client {
         }
 
         if (choosedPath.isEmpty()) {
-            this.setState(State.FINISH);
+            this.changeState();
         } else {
             this.posToView = newPosToView;
             for (int i = 1; i < choosedPath.size(); i++) {
                 Node node = choosedPath.get(i);
-                this.listNextPos
-                        .add(new Tuple<>(node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1)));
+                this.listNextPos.add(this.convertNodeToTuple(node));
             }
         }
     }
@@ -300,24 +314,33 @@ public class ClientC2 extends Client {
         } while (!validPos && !posToView.isEmpty());
 
         if (!validPos) {
-            this.setState(State.FINISH);
+            this.changeState();
         } else {
             // apply A*
             Node initialNode = new Node((MyMap.CELLROWS - 1) + this.nextPosY, (MyMap.CELLCOLS - 1) + this.nextPosX);
             Node finalNode = new Node((MyMap.CELLROWS - 1) + choosedPos.y, (MyMap.CELLCOLS - 1) + choosedPos.x);
             AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
-            aStar.setBlocks(this.myMap.getLabMap());
+            aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
             List<Node> path = aStar.findPath();
             if (path.isEmpty()) {
-                this.setState(State.FINISH);
+                this.changeState();
                 return;
             }
             for (int i = 1; i < path.size(); i++) {
                 Node node = path.get(i);
-                this.listNextPos
-                        .add(new Tuple<>(node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1)));
+                this.listNextPos.add(this.convertNodeToTuple(node));
             }
         }
+    }
+
+    /**
+     * Convert node position in tuple position
+     * 
+     * @param node node position
+     * @return tuple position
+     */
+    public Tuple<Integer, Integer> convertNodeToTuple(Node node) {
+        return new Tuple<>(node.getCol() - (MyMap.CELLCOLS - 1), node.getRow() - (MyMap.CELLROWS - 1));
     }
 
     /**

@@ -21,10 +21,11 @@ public abstract class Client {
     private double[] sensorsAngle;
 
     // Constructor
-    public Client(double[] sensorsAngle) {
+    public Client(String[] args, double[] sensorsAngle) {
         this.sensorsAngle = sensorsAngle;
         this.cif = new ciberIF();
         this.state = State.RUN;
+        this.commandLineValidate(args);
     }
 
     public ciberIF getCiberIF() {
@@ -35,8 +36,8 @@ public abstract class Client {
         return this.state;
     }
 
-    public void setState(State state) {
-        this.state = state;
+    public void changeState() {
+        this.state = State.FINISH;
     }
 
     /**
@@ -111,6 +112,10 @@ public abstract class Client {
 
             // move
             this.wander();
+
+            // time out
+            if (this.getCiberIF().GetTime() >= this.cif.GetFinalTime())
+                this.changeState();
             break;
         case FINISH:
             this.getCiberIF().Finish();
@@ -126,7 +131,7 @@ public abstract class Client {
     public abstract void wander();
 
     /**
-     * Read sensors
+     * Read sensors, compass, gps, ground
      */
     public abstract void readSensors();
 
@@ -139,4 +144,5 @@ public abstract class Client {
      * What to do on finish state
      */
     public abstract void finishState();
+
 };

@@ -10,8 +10,8 @@ public class ClientC1 extends Client {
     private boolean inGround, turnAround;
 
     // Cronstructor
-    public ClientC1() {
-        super(null);
+    public ClientC1(String[] args) {
+        super(args, null);
         this.lastTime = 0;
         this.ground = 0;
         this.countLaps = 0;
@@ -115,7 +115,7 @@ public class ClientC1 extends Client {
 
             // complete goal
             if (this.countLaps == 10) {
-                this.setState(State.FINISH);
+                this.changeState();
             }
         } else
             this.inGround = false;
@@ -129,8 +129,7 @@ public class ClientC1 extends Client {
 
     public static void main(String[] args) {
         // create client
-        Client client = new ClientC1();
-        client.commandLineValidate(args);
+        Client client = new ClientC1(args);
 
         // main loop
         client.mainLoop();
