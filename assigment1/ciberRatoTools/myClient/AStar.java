@@ -7,7 +7,6 @@ import java.util.*;
 public class AStar {
 
     private static int DEFAULT_COST = 10;
-    private int cost;
     private Node[][] searchArea;
     private PriorityQueue<Node> openList;
     private Set<Node> closedSet;
@@ -24,7 +23,6 @@ public class AStar {
      * @param finalNode   final position
      */
     public AStar(int rows, int cols, Node initialNode, Node finalNode) {
-        this.cost = DEFAULT_COST;
         this.initialNode = initialNode;
         this.finalNode = finalNode;
         this.searchArea = new Node[rows][cols];
@@ -132,10 +130,10 @@ public class AStar {
     private void checkNode(Node currentNode, Node adjacentNode, Node nextNode) {
         if (!adjacentNode.isBlock() && !this.closedSet.contains(nextNode)) {
             if (!this.openList.contains(nextNode)) {
-                nextNode.setNodeData(currentNode, this.cost);
+                nextNode.setNodeData(currentNode, DEFAULT_COST);
                 this.openList.add(nextNode);
             } else {
-                if (nextNode.checkBetterPath(currentNode, this.cost)) {
+                if (nextNode.checkBetterPath(currentNode, DEFAULT_COST)) {
                     // Remove and Add the changed node, so that the PriorityQueue can sort again its
                     // contents with the modified "finalCost" value of the modified node
                     this.openList.remove(nextNode);

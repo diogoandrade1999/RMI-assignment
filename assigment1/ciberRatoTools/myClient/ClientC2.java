@@ -17,7 +17,12 @@ public class ClientC2 extends Client {
     private MyMap myMap;
     private boolean inGoalPos, discoverMapGoal, useCheckedPos;
 
-    // Construtor
+    /**
+     * Client Constructor
+     * 
+     * @param args          command line arguments
+     * @param useCheckedPos true is agent can use the method checkedPos of the MyMap
+     */
     public ClientC2(String[] args, boolean useCheckedPos) {
         super(args, SENSORS_ANGLES);
 
@@ -259,9 +264,9 @@ public class ClientC2 extends Client {
     /**
      * Check if the positions of the sides are free path
      * 
-     * @param move      side positons
-     * @param plusX     value of x to add to actual x position
-     * @param plusY     value of y to add to actual y position
+     * @param move  side positons
+     * @param plusX value of x to add to actual x position
+     * @param plusY value of y to add to actual y position
      */
     private void checkFree(Move move, int plusX, int plusY) {
         if (!this.myMap.checkObstaclePos(this.actualPosX, this.actualPosY, move)) {
@@ -293,7 +298,8 @@ public class ClientC2 extends Client {
             Tuple<Integer, Integer> pos = this.posToView.get(i);
 
             // check if position was verified by another path
-            if (!pos.equals(this.getActualPos()) && (!this.useCheckedPos || (this.useCheckedPos && !this.myMap.ckeckedPos(pos.x, pos.y)))) {
+            if (!pos.equals(this.getActualPos())
+                    && (!this.useCheckedPos || (this.useCheckedPos && !this.myMap.ckeckedPos(pos.x, pos.y)))) {
                 // goal position
                 Node finalNode = new Node((MyMap.CELLROWS - 1) + pos.y, (MyMap.CELLCOLS - 1) + pos.x);
 
