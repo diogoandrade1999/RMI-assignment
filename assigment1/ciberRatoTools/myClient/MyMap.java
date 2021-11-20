@@ -13,7 +13,9 @@ public class MyMap {
     public static final int CELLCOLS = 28;
     private char[][] labMap;
 
-    // Constructor
+   /**
+    * Map Constructor
+    */
     public MyMap() {
         this.labMap = new char[CELLROWS * 2 - 1][CELLCOLS * 2 - 1];
 
@@ -28,6 +30,17 @@ public class MyMap {
     }
 
     /**
+     * Update map
+     * 
+     * @param xPos x position on map
+     * @param yPos y position on map
+     */
+    private void updateMap(int xPos, int yPos, char symbol) {
+        if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
+            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = symbol;
+    }
+
+    /**
      * Insert on a map position a obstacle
      * 
      * @param xPos x position on map
@@ -35,22 +48,19 @@ public class MyMap {
      * @param move agent moviment
      */
     public void addObstacle(int xPos, int yPos, Client.Move move) {
+        this.updateMap(xPos, yPos, 'X');
         switch (move) {
         case UP:
-            this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] = '-'; // Adds '-' to the top of the
-                                                                                   // position (yPos + 1)
+            this.updateMap(xPos, yPos + 1, '-');
             break;
         case DOWN:
-            this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] = '-'; // Adds '-' to the bottom of the
-                                                                                   // position (yPos - 1)
+            this.updateMap(xPos, yPos - 1, '-');
             break;
         case LEFT:
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] = '|'; // Adds '|' to the left of the
-                                                                                   // position (xPos - 1)
+            this.updateMap(xPos - 1, yPos, '|');
             break;
         case RIGHT:
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] = '|'; // Adds '|' to the right of the
-                                                                                   // position (xPos + 1)
+            this.updateMap(xPos + 1, yPos, '|');
             break;
         default:
             break;
@@ -65,24 +75,19 @@ public class MyMap {
      * @param move agent moviment
      */
     public void addFree(int xPos, int yPos, Client.Move move) {
-        if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = 'X';
+        this.updateMap(xPos, yPos, 'X');
         switch (move) {
         case UP:
-            this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] = 'X'; // Adds 'X' to the top of the
-                                                                                   // position (yPos + 1)
+            this.updateMap(xPos, yPos + 1, 'X');
             break;
         case DOWN:
-            this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] = 'X'; // Adds 'X' to the bottom of the
-                                                                                   // position (yPos - 1)
+            this.updateMap(xPos, yPos - 1, 'X');
             break;
         case LEFT:
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] = 'X'; // Adds 'X' to the left of the
-                                                                                   // position (xPos - 1)
+            this.updateMap(xPos - 1, yPos, 'X');
             break;
         case RIGHT:
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] = 'X'; // Adds 'X' to the right of the
-                                                                                   // position (xPos + 1)
+            this.updateMap(xPos + 1, yPos, 'X');
             break;
         default:
             break;
@@ -100,23 +105,19 @@ public class MyMap {
     public boolean checkFreePos(int xPos, int yPos, Client.Move move) {
         switch (move) {
         case UP:
-            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == 'X') // Check if 'X' to the top of
-                                                                                        // the position (yPos + 1)
+            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == 'X')
                 return true;
             break;
         case DOWN:
-            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == 'X') // Check if 'X' to the bottom of
-                                                                                        // the position (yPos - 1)
+            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == 'X')
                 return true;
             break;
         case LEFT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == 'X') // Check if 'X' to the left of
-                                                                                        // the position (xPos - 1)
+            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == 'X')
                 return true;
             break;
         case RIGHT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == 'X') // Check if 'X' to the right of
-                                                                                        // the position (xPos + 1)
+            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == 'X')
                 return true;
             break;
         default:
@@ -136,23 +137,19 @@ public class MyMap {
     public boolean checkObstaclePos(int xPos, int yPos, Client.Move move) {
         switch (move) {
         case UP:
-            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == '-') // Check if '-' to the top of
-                                                                                        // the position (yPos + 1)
+            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == '-')
                 return true;
             break;
         case DOWN:
-            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == '-') // Check if '-' to the bottom of
-                                                                                        // the position (yPos - 1)
+            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == '-')
                 return true;
             break;
         case LEFT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == '|') // Check if '|' to the left of
-                                                                                        // the position (xPos - 1)
+            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == '|')
                 return true;
             break;
         case RIGHT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == '|') // Check if '|' to the right of
-                                                                                        // the position (xPos + 1)
+            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == '|')
                 return true;
             break;
         default:
@@ -174,8 +171,7 @@ public class MyMap {
                 || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == ' '
                 || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == ' ')
             return false;
-        if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
-            this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = 'X';
+        this.updateMap(xPos, yPos, 'X');
         return true;
     }
 
@@ -186,18 +182,25 @@ public class MyMap {
      */
     public void exportMap(String fileName) {
         try {
-            File myObj = new File(fileName);
-            if (myObj.createNewFile()) {
-                System.out.println("File created: " + myObj.getName());
+            File file = new File(fileName);
+
+            // create file if does not exist
+            if (file.createNewFile()) {
+                System.out.println("File created: " + file.getName());
             }
-            FileWriter myWriter = new FileWriter(fileName);
+
+            // file writer
+            FileWriter fileWriter = new FileWriter(fileName);
+
+            // write on a file
             for (int i = this.labMap.length - 1; i >= 0; i--) {
-                for (char c : this.labMap[i]) {
-                    myWriter.write(c);
-                }
-                myWriter.write('\n');
+                for (char c : this.labMap[i])
+                    fileWriter.write(c);
+                fileWriter.write('\n');
             }
-            myWriter.close();
+
+            // close file writer
+            fileWriter.close();
         } catch (IOException e) {
             System.out.println("An error occurred.");
             System.exit(1);

@@ -15,6 +15,14 @@ public class AStar {
     private Node finalNode;
 
     // Constructor
+    /**
+     * A* Algorithm Constructor
+     * 
+     * @param rows        number of rows of search area
+     * @param cols        number of columns of search area
+     * @param initialNode inicial position
+     * @param finalNode   final position
+     */
     public AStar(int rows, int cols, Node initialNode, Node finalNode) {
         this.cost = DEFAULT_COST;
         this.initialNode = initialNode;

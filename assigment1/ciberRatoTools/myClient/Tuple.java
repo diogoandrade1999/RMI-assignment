@@ -14,6 +14,12 @@ public class Tuple<X, Y> {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        Tuple<Integer, Integer> other = (Tuple<Integer, Integer>) obj;
+        return this.x == other.x && this.y == other.y;
+    }
+
+    @Override
     public String toString() {
         return "(" + x + "," + y + ")";
     }

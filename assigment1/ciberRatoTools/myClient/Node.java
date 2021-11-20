@@ -13,7 +13,12 @@ public class Node {
     private boolean isBlock;
     private Node parent;
 
-    // Constructor
+    /**
+     * Node Constructor
+     * 
+     * @param row y position
+     * @param col x position
+     */
     public Node(int row, int col) {
         this.row = row;
         this.col = col;

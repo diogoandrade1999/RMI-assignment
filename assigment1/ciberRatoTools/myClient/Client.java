@@ -19,8 +19,13 @@ public abstract class Client {
     private ciberIF cif;
     private State state;
     private double[] sensorsAngle;
+    private String filename;
 
-    // Constructor
+    /**
+     * Client Constructor
+     * @param args command line arguments
+     * @param sensorsAngle angle of the sensors
+     */
     public Client(String[] args, double[] sensorsAngle) {
         this.sensorsAngle = sensorsAngle;
         this.cif = new ciberIF();
@@ -40,6 +45,10 @@ public abstract class Client {
         this.state = State.FINISH;
     }
 
+    public String getFilename() {
+        return this.filename;
+    }
+
     /**
      * Reads a new message, decides what to do and sends action to simulator
      */
@@ -56,13 +65,14 @@ public abstract class Client {
      * @param args arguments of passed by commad line
      */
     public void commandLineValidate(String[] args) {
-        String host, robName;
+        String host, robName, filename;
         int pos;
         int arg;
 
         // default values
         host = "localhost";
         robName = "jClient";
+        filename = "file.out";
         pos = 1;
 
         // parse command-line arguments
@@ -84,12 +94,17 @@ public abstract class Client {
                         host = args[arg + 1];
                         arg += 2;
                     }
+                } else if (args[arg].equals("--filename") || args[arg].equals("-f")) {
+                    if (args.length > arg + 1) {
+                        filename = args[arg + 1];
+                        arg += 2;
+                    }
                 } else
                     throw new Exception();
             }
         } catch (Exception e) {
             System.out.println(
-                    "Usage: java ClientC[1||2||3] [--robname <robname>] [--pos <pos>] [--host <hostname>[:<port>]]");
+                    "Usage: java ClientC[1||2||3] [--robname <robname>] [--pos <pos>] [--host <hostname>[:<port>]] [--filename <filename>]");
             return;
         }
 
@@ -98,6 +113,7 @@ public abstract class Client {
             this.cif.InitRobot(robName, pos, host);
         else
             this.cif.InitRobot2(robName, pos, this.sensorsAngle, host);
+        this.filename = filename;
     }
 
     /**

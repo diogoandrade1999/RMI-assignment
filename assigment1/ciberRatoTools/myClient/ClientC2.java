@@ -10,14 +10,15 @@ public class ClientC2 extends Client {
     private static final double THRESHHOLD_SENSORS = 1.1;
     private final double initGpsX, initGpsY;
     private double irSensor0, irSensor1, irSensor2, irSensor3, compass, gpsX, gpsY;
-    private int nextPosX, nextPosY;
+    private int actualPosX, actualPosY, nextPosX, nextPosY;
     private Move actualMove, nextMove;
     private Stack<Tuple<Integer, Integer>> posToView;
     private Queue<Tuple<Integer, Integer>> listNextPos;
     private MyMap myMap;
+    private boolean inGoalPos, discoverMapGoal, useCheckedPos;
 
     // Construtor
-    public ClientC2(String[] args) {
+    public ClientC2(String[] args, boolean useCheckedPos) {
         super(args, SENSORS_ANGLES);
 
         // read first position
@@ -30,29 +31,30 @@ public class ClientC2 extends Client {
 
         this.gpsX = 0;
         this.gpsY = 0;
+        this.actualPosX = 0;
+        this.actualPosY = 0;
         this.nextPosX = 0;
         this.nextPosY = 0;
-        this.actualMove = Move.RIGHT;
+        this.actualMove = Move.NONE;
         this.nextMove = Move.NONE;
         this.posToView = new Stack<>();
         this.listNextPos = new LinkedList<>();
         this.myMap = new MyMap();
+        this.inGoalPos = false;
+        this.discoverMapGoal = true;
+        this.useCheckedPos = useCheckedPos;
     }
 
-    public Move getNextMove() {
-        return this.nextMove;
-    }
-
-    public Tuple<Integer, Integer> getNextPos() {
-        return new Tuple<>(this.nextPosX, this.nextPosY);
-    }
-
-    public Stack<Tuple<Integer, Integer>> getPosToView() {
-        return this.posToView;
+    public Tuple<Integer, Integer> getActualPos() {
+        return new Tuple<>(this.actualPosX, this.actualPosY);
     }
 
     public MyMap getMyMap() {
         return this.myMap;
+    }
+
+    public boolean inGoalPos() {
+        return this.inGoalPos;
     }
 
     @Override
@@ -90,28 +92,44 @@ public class ClientC2 extends Client {
 
     @Override
     public void runState() {
-        if (this.closeToNextPos() && this.nextMove.equals(Move.NONE)) {
-            if (this.listNextPos.isEmpty())
+        // in goal position
+        if (this.closeToNextPos()) {
+            // moving in an unexplored position on the map
+            if (this.listNextPos.isEmpty()) {
+                // explore map
                 this.discoverMap();
 
+                // if does not find any possible move
+                if (this.discoverMapGoal && this.actualMove.equals(Move.NONE)) {
+                    // complete goal
+                    if (this.posToView.isEmpty())
+                        this.changeState();
+                    else {
+                        // check position left behind
+                        this.searchNextPosShortPath();
+
+                        // complete goal
+                        if (this.listNextPos.isEmpty())
+                            this.changeState();
+                    }
+                }
+            }
+
+            // moving in a explored position on the map
             if (!this.listNextPos.isEmpty())
                 this.readNextMoveFromList();
-
-            if (!this.nextMove.equals(Move.NONE)) {
-                this.giveNextPosGivenMove();
-            }
         }
     }
 
     @Override
     public void finishState() {
         System.out.println("Time: " + this.getCiberIF().GetTime());
-        this.myMap.exportMap("map.out");
+        this.myMap.exportMap(this.getFilename());
     }
 
     public static void main(String[] args) {
         // create client
-        Client client = new ClientC2(args);
+        Client client = new ClientC2(args, true);
 
         // main loop
         client.mainLoop();
@@ -157,12 +175,17 @@ public class ClientC2 extends Client {
      * 
      * @return true if the agent is in the intended position, otherwise false
      */
-    public boolean closeToNextPos() {
+    private boolean closeToNextPos() {
         double angle = this.getAngle();
-        if (((-0.25 < gpsX - nextPosX && gpsX - nextPosX <= 0.25)
-                && (-0.25 < gpsY - nextPosY && gpsY - nextPosY <= 0.25))
-                || (irSensor0 >= 3.3 && (-3 < angle && angle < 3)))
+        if (((-0.25 < this.gpsX - this.nextPosX && this.gpsX - this.nextPosX <= 0.25)
+                && (-0.25 < this.gpsY - this.nextPosY && this.gpsY - this.nextPosY <= 0.25))
+                || (this.irSensor0 >= 3.3 && (-3 < angle && angle < 3))) {
+            this.actualPosX = this.nextPosX;
+            this.actualPosY = this.nextPosY;
+            this.inGoalPos = true;
             return true;
+        }
+        this.inGoalPos = false;
         return false;
     }
 
@@ -185,47 +208,38 @@ public class ClientC2 extends Client {
         this.checkObstacle(irSensorsLeft, Move.LEFT);
 
         // continue to do the same move if possible
-        if (!this.myMap.checkObstaclePos(this.nextPosX, this.nextPosY, this.actualMove)
-                && !this.myMap.checkFreePos(this.nextPosX, this.nextPosY, this.actualMove))
-            this.nextMove = this.actualMove;
-
-        // ! redudant switch code with if above
         // get next move
         switch (this.actualMove) {
         case UP:
-            this.checkFree(irSensorsRight, Move.RIGHT, +2, 0);
-            this.checkFree(irSensorsLeft, Move.LEFT, -2, 0);
-            this.checkFree(irSensorsUp, Move.UP, 0, +2);
-            this.checkFree(irSensorsDown, Move.DOWN, 0, -2);
+            this.checkFree(Move.UP, 0, +2);
+            this.checkFree(Move.RIGHT, +2, 0);
+            this.checkFree(Move.LEFT, -2, 0);
+            this.checkFree(Move.DOWN, 0, -2);
             break;
         case DOWN:
-            this.checkFree(irSensorsRight, Move.RIGHT, +2, 0);
-            this.checkFree(irSensorsLeft, Move.LEFT, -2, 0);
-            this.checkFree(irSensorsDown, Move.DOWN, 0, -2);
-            this.checkFree(irSensorsUp, Move.UP, 0, +2);
+            this.checkFree(Move.DOWN, 0, -2);
+            this.checkFree(Move.RIGHT, +2, 0);
+            this.checkFree(Move.LEFT, -2, 0);
+            this.checkFree(Move.UP, 0, +2);
             break;
         case LEFT:
-            this.checkFree(irSensorsUp, Move.UP, 0, +2);
-            this.checkFree(irSensorsDown, Move.DOWN, 0, -2);
-            this.checkFree(irSensorsLeft, Move.LEFT, -2, 0);
-            this.checkFree(irSensorsRight, Move.RIGHT, +2, 0);
+            this.checkFree(Move.LEFT, -2, 0);
+            this.checkFree(Move.UP, 0, +2);
+            this.checkFree(Move.DOWN, 0, -2);
+            this.checkFree(Move.RIGHT, +2, 0);
             break;
         case RIGHT:
         default:
-            this.checkFree(irSensorsUp, Move.UP, 0, +2);
-            this.checkFree(irSensorsDown, Move.DOWN, 0, -2);
-            this.checkFree(irSensorsRight, Move.RIGHT, +2, 0);
-            this.checkFree(irSensorsLeft, Move.LEFT, -2, 0);
+            this.checkFree(Move.RIGHT, +2, 0);
+            this.checkFree(Move.UP, 0, +2);
+            this.checkFree(Move.DOWN, 0, -2);
+            this.checkFree(Move.LEFT, -2, 0);
             break;
         }
 
-        // if does not find any possible move
-        if (this.nextMove.equals(Move.NONE)) {
-            if (this.posToView.isEmpty())
-                this.changeState();
-            else
-                this.searchNextPosShortPath();
-        }
+        // pass next move to actual move
+        this.actualMove = this.nextMove;
+        this.nextMove = Move.NONE;
     }
 
     /**
@@ -239,28 +253,26 @@ public class ClientC2 extends Client {
                 || (87 < this.compass && this.compass < 93 && irSensors[1] >= THRESHHOLD_SENSORS)
                 || (-93 < this.compass && this.compass < -87 && irSensors[2] >= THRESHHOLD_SENSORS)
                 || ((-177 > this.compass || this.compass > 177) && irSensors[3] >= THRESHHOLD_SENSORS))
-            this.myMap.addObstacle(this.nextPosX, this.nextPosY, move);
+            this.myMap.addObstacle(this.actualPosX, this.actualPosY, move);
     }
 
     /**
      * Check if the positions of the sides are free path
      * 
-     * @param irSensors sensors values
      * @param move      side positons
      * @param plusX     value of x to add to actual x position
      * @param plusY     value of y to add to actual y position
      */
-    private void checkFree(double[] irSensors, Move move, int plusX, int plusY) {
-        if ((-3 < this.compass && this.compass < 3 && irSensors[0] < THRESHHOLD_SENSORS)
-                || (87 < this.compass && this.compass < 93 && irSensors[1] < THRESHHOLD_SENSORS)
-                || (-93 < this.compass && this.compass < -87 && irSensors[2] < THRESHHOLD_SENSORS)
-                || ((-177 > this.compass || this.compass > 177) && irSensors[3] < THRESHHOLD_SENSORS)) {
-            if ((this.nextMove.equals(Move.NONE) || this.nextMove.equals(move))
-                    && !this.myMap.checkFreePos(this.nextPosX, this.nextPosY, move))
-                this.nextMove = move;
-            else if (!this.myMap.checkFreePos(this.nextPosX, this.nextPosY, move))
-                this.posToView.add(new Tuple<>(this.nextPosX + plusX, this.nextPosY + plusY));
-            this.myMap.addFree(this.nextPosX, this.nextPosY, move);
+    private void checkFree(Move move, int plusX, int plusY) {
+        if (!this.myMap.checkObstaclePos(this.actualPosX, this.actualPosY, move)) {
+            if (!this.myMap.checkFreePos(this.actualPosX, this.actualPosY, move))
+                if (this.nextMove.equals(Move.NONE)) {
+                    this.nextMove = move;
+                    this.nextPosX += plusX;
+                    this.nextPosY += plusY;
+                } else
+                    this.posToView.add(new Tuple<>(this.actualPosX + plusX, this.actualPosY + plusY));
+            this.myMap.addFree(this.actualPosX, this.actualPosY, move);
         }
     }
 
@@ -272,65 +284,60 @@ public class ClientC2 extends Client {
         List<Node> choosedPath = new ArrayList<>();
         Tuple<Integer, Integer> choosedPos = new Tuple<>(0, 0);
         Stack<Tuple<Integer, Integer>> newPosToView = new Stack<>();
-        Node initialNode = new Node((MyMap.CELLROWS - 1) + this.nextPosY, (MyMap.CELLCOLS - 1) + this.nextPosX);
+
+        // actual position
+        Node initialNode = new Node((MyMap.CELLROWS - 1) + this.actualPosY, (MyMap.CELLCOLS - 1) + this.actualPosX);
+
         for (int i = 0; i < this.posToView.size(); i++) {
+            // position left behind
             Tuple<Integer, Integer> pos = this.posToView.get(i);
-            if (!this.myMap.ckeckedPos(pos.x, pos.y)) {
+
+            // check if position was verified by another path
+            if (!pos.equals(this.getActualPos()) && (!this.useCheckedPos || (this.useCheckedPos && !this.myMap.ckeckedPos(pos.x, pos.y)))) {
+                // goal position
                 Node finalNode = new Node((MyMap.CELLROWS - 1) + pos.y, (MyMap.CELLCOLS - 1) + pos.x);
+
+                // apply A*
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
                 aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
                 List<Node> path = aStar.findPath();
+
+                // if this position has the close path from actual position
                 if (path.size() > 0 && (choosedPath.size() == 0 || path.size() < choosedPath.size())) {
                     if (choosedPos.x != 0 || choosedPos.y != 0)
                         newPosToView.add(choosedPos);
                     choosedPath = path;
                     choosedPos = pos;
-                } else if (path.size() == 0 || path.size() >= choosedPath.size())
+                }
+                // otherwise check later
+                else if (path.size() >= choosedPath.size())
                     newPosToView.add(pos);
             }
         }
 
-        if (choosedPath.isEmpty()) {
-            this.changeState();
-        } else {
+        // if find position to check
+        if (!choosedPath.isEmpty()) {
             this.posToView = newPosToView;
-            for (int i = 1; i < choosedPath.size(); i++) {
-                Node node = choosedPath.get(i);
-                this.listNextPos.add(this.convertNodeToTuple(node));
-            }
+            for (int i = 1; i < choosedPath.size(); i++)
+                this.listNextPos.add(this.convertNodeToTuple(choosedPath.get(i)));
         }
     }
 
     /**
-     * Search for a position left begind using A* algorithm sorted by last position
-     * he left begind
+     * Read next move from list
      */
-    private void searchNextPosLastPos() {
-        Tuple<Integer, Integer> choosedPos;
-        boolean validPos;
-        do {
-            choosedPos = this.posToView.pop();
-            validPos = !this.myMap.ckeckedPos(choosedPos.x, choosedPos.y);
-        } while (!validPos && !posToView.isEmpty());
-
-        if (!validPos) {
-            this.changeState();
-        } else {
-            // apply A*
-            Node initialNode = new Node((MyMap.CELLROWS - 1) + this.nextPosY, (MyMap.CELLCOLS - 1) + this.nextPosX);
-            Node finalNode = new Node((MyMap.CELLROWS - 1) + choosedPos.y, (MyMap.CELLCOLS - 1) + choosedPos.x);
-            AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
-            aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
-            List<Node> path = aStar.findPath();
-            if (path.isEmpty()) {
-                this.changeState();
-                return;
-            }
-            for (int i = 1; i < path.size(); i++) {
-                Node node = path.get(i);
-                this.listNextPos.add(this.convertNodeToTuple(node));
-            }
-        }
+    private void readNextMoveFromList() {
+        Tuple<Integer, Integer> pos = this.listNextPos.poll();
+        if (this.actualPosX + 2 == pos.x)
+            this.actualMove = Move.RIGHT;
+        else if (this.actualPosX - 2 == pos.x)
+            this.actualMove = Move.LEFT;
+        else if (this.actualPosY + 2 == pos.y)
+            this.actualMove = Move.UP;
+        else if (this.actualPosY - 2 == pos.y)
+            this.actualMove = Move.DOWN;
+        this.nextPosX = pos.x;
+        this.nextPosY = pos.y;
     }
 
     /**
@@ -344,42 +351,22 @@ public class ClientC2 extends Client {
     }
 
     /**
-     * Read next move from list
+     * Go to this position
+     * 
+     * @param position next position
+     * @param move     actual move
      */
-    private void readNextMoveFromList() {
-        Tuple<Integer, Integer> pos = this.listNextPos.poll();
-        if (this.nextPosX + 2 == pos.x)
-            this.nextMove = Move.RIGHT;
-        else if (this.nextPosX - 2 == pos.x)
-            this.nextMove = Move.LEFT;
-        else if (this.nextPosY + 2 == pos.y)
-            this.nextMove = Move.UP;
-        else if (this.nextPosY - 2 == pos.y)
-            this.nextMove = Move.DOWN;
+    public void goToThisPos(Tuple<Integer, Integer> position, Move move) {
+        this.nextPosX = position.x;
+        this.nextPosY = position.y;
+        this.actualMove = move;
     }
 
     /**
-     * Give next position given the next move
+     * Change agent goal
      */
-    private void giveNextPosGivenMove() {
-        switch (nextMove) {
-        case RIGHT:
-            nextPosX += 2;
-            break;
-        case LEFT:
-            nextPosX -= 2;
-            break;
-        case UP:
-            nextPosY += 2;
-            break;
-        case DOWN:
-            nextPosY -= 2;
-            break;
-        default:
-            break;
-        }
-
-        actualMove = nextMove;
-        nextMove = Move.NONE;
+    public void changeGoal() {
+        this.discoverMapGoal = false;
     }
+
 }
