@@ -11,7 +11,7 @@ public class ClientC2 extends Client {
     private final double initGpsX, initGpsY;
     private double irSensor0, irSensor1, irSensor2, irSensor3, compass, gpsX, gpsY;
     private int actualPosX, actualPosY, nextPosX, nextPosY;
-    private Move actualMove, nextMove;
+    private Move actualMove, nextMove, lasMove;
     private Stack<Tuple<Integer, Integer>> posToView;
     private Queue<Tuple<Integer, Integer>> listNextPos;
     private MyMap myMap;
@@ -42,6 +42,7 @@ public class ClientC2 extends Client {
         this.nextPosY = 0;
         this.actualMove = Move.NONE;
         this.nextMove = Move.NONE;
+        this.lasMove = Move.NONE;
         this.posToView = new Stack<>();
         this.listNextPos = new LinkedList<>();
         this.myMap = new MyMap();
@@ -60,6 +61,10 @@ public class ClientC2 extends Client {
 
     public boolean inGoalPos() {
         return this.inGoalPos;
+    }
+
+    public Move getLasMove() {
+        return this.lasMove;
     }
 
     @Override
@@ -219,21 +224,21 @@ public class ClientC2 extends Client {
             this.checkFree(Move.UP, 0, +2);
             this.checkFree(Move.RIGHT, +2, 0);
             this.checkFree(Move.LEFT, -2, 0);
-            this.checkFree(Move.DOWN, 0, -2);
             break;
         case DOWN:
             this.checkFree(Move.DOWN, 0, -2);
             this.checkFree(Move.RIGHT, +2, 0);
             this.checkFree(Move.LEFT, -2, 0);
-            this.checkFree(Move.UP, 0, +2);
             break;
         case LEFT:
             this.checkFree(Move.LEFT, -2, 0);
             this.checkFree(Move.UP, 0, +2);
             this.checkFree(Move.DOWN, 0, -2);
-            this.checkFree(Move.RIGHT, +2, 0);
             break;
         case RIGHT:
+            this.checkFree(Move.RIGHT, +2, 0);
+            this.checkFree(Move.UP, 0, +2);
+            this.checkFree(Move.DOWN, 0, -2);
         default:
             this.checkFree(Move.RIGHT, +2, 0);
             this.checkFree(Move.UP, 0, +2);
@@ -243,6 +248,7 @@ public class ClientC2 extends Client {
         }
 
         // pass next move to actual move
+        this.lasMove = this.actualMove;
         this.actualMove = this.nextMove;
         this.nextMove = Move.NONE;
     }
@@ -286,8 +292,8 @@ public class ClientC2 extends Client {
      * from actual position
      */
     private void searchNextPosShortPath() {
-        List<Node> choosedPath = new ArrayList<>();
-        Tuple<Integer, Integer> choosedPos = new Tuple<>(0, 0);
+        List<Node> choosedPath = null;
+        Tuple<Integer, Integer> choosedPos = null;
         Stack<Tuple<Integer, Integer>> newPosToView = new Stack<>();
 
         // actual position
@@ -306,23 +312,26 @@ public class ClientC2 extends Client {
                 // apply A*
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
                 aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
-                List<Node> path = aStar.findPath();
+                List<Node> path = aStar.findPath(this.lasMove);
 
-                // if this position has the close path from actual position
-                if (path.size() > 0 && (choosedPath.size() == 0 || path.size() < choosedPath.size())) {
-                    if (choosedPos.x != 0 || choosedPos.y != 0)
-                        newPosToView.add(choosedPos);
-                    choosedPath = path;
-                    choosedPos = pos;
+                if (path.size() > 0) {
+                    // if this position has the close path from actual position
+                    if (choosedPath == null || path.get(path.size() - 1).getFCost() < choosedPath
+                            .get(choosedPath.size() - 1).getFCost()) {
+                        if (choosedPos != null)
+                            newPosToView.add(choosedPos);
+                        choosedPath = path;
+                        choosedPos = pos;
+                    }
+                    // otherwise check later
+                    else if (path.get(path.size() - 1).getFCost() >= choosedPath.get(choosedPath.size() - 1).getFCost())
+                        newPosToView.add(pos);
                 }
-                // otherwise check later
-                else if (path.size() >= choosedPath.size())
-                    newPosToView.add(pos);
             }
         }
 
         // if find position to check
-        if (!choosedPath.isEmpty()) {
+        if (choosedPath != null) {
             this.posToView = newPosToView;
             for (int i = 1; i < choosedPath.size(); i++)
                 this.listNextPos.add(this.convertNodeToTuple(choosedPath.get(i)));

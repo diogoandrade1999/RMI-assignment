@@ -99,15 +99,15 @@ public class ClientC3 extends ClientC2 {
                 // look for possible better path
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, nodeI, nodeJ);
                 aStar.setBlocks(this.getMyMap().getLabMap(), MyMap.BLOCKERS_WALLS);
-                List<Node> bestSubPath = aStar.findPath();
+                List<Node> bestSubPath = aStar.findPath(this.getLasMove());
 
                 // look for better path
                 aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, nodeI, nodeJ);
                 aStar.setBlocks(this.getMyMap().getLabMap(), MyMap.BLOCKERS_ALL);
-                List<Node> path = aStar.findPath();
+                List<Node> path = aStar.findPath(this.getLasMove());
 
                 // possible better path is small than better path founded
-                if (bestSubPath.size() < path.size()) {
+                if (bestSubPath.get(bestSubPath.size() - 1).getFCost() < path.get(path.size() - 1).getFCost()) {
                     System.out.println("There may be a better path between targets " + i + " and " + j);
                     this.pathBetweenTargets = null;
 

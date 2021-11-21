@@ -19,6 +19,7 @@ public class Tuple<X, Y> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean equals(Object obj) {
         Tuple<Integer, Integer> other = (Tuple<Integer, Integer>) obj;
         return this.x == other.x && this.y == other.y;

@@ -116,11 +116,6 @@ public class ClientC1 extends Client {
             }
             this.lastTarget = this.ground;
             this.inGround = true;
-
-            // complete goal
-            if (this.countLaps == 10) {
-                this.changeState();
-            }
         } else
             this.inGround = false;
     }

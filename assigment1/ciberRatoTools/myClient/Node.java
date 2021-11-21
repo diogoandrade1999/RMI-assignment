@@ -12,6 +12,7 @@ public class Node {
     private int col;
     private boolean isBlock;
     private Node parent;
+    private Client.Move move;
 
     /**
      * Node Constructor
@@ -23,6 +24,7 @@ public class Node {
         this.row = row;
         this.col = col;
         this.isBlock = false;
+        this.move = Client.Move.NONE;
     }
 
     public int getHCost() {
@@ -57,6 +59,14 @@ public class Node {
         return col;
     }
 
+    public Client.Move getMove() {
+        return this.move;
+    }
+
+    public void setMove(Client.Move move) {
+        this.move = move;
+    }
+
     /**
      * Calculation of heuristic of the node
      * 
@@ -71,11 +81,13 @@ public class Node {
      * 
      * @param currentNode actual position
      * @param cost        additional cost
+     * @param move        actual move
      */
-    public void setNodeData(Node currentNode, int cost) {
+    public void setNodeData(Node currentNode, int cost, Client.Move move) {
         this.gCost = currentNode.getGCost() + cost;
         this.parent = currentNode;
         this.fCost = this.gCost + this.hCost;
+        this.move = move;
     }
 
     /**
@@ -83,12 +95,13 @@ public class Node {
      * 
      * @param currentNode actul position
      * @param cost        additional cost
+     * @param move        actual move
      * @return true if is the best path, otherwise false
      */
-    public boolean checkBetterPath(Node currentNode, int cost) {
+    public boolean checkBetterPath(Node currentNode, int cost, Client.Move move) {
         int gCost = currentNode.getGCost() + cost;
         if (gCost < this.gCost) {
-            setNodeData(currentNode, cost);
+            setNodeData(currentNode, cost, move);
             return true;
         }
         return false;

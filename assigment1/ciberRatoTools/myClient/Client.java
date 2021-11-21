@@ -13,7 +13,38 @@ public abstract class Client {
 
     /** Client Moves */
     public static enum Move {
-        UP, DOWN, RIGHT, LEFT, NONE
+        UP, DOWN, RIGHT, LEFT, NONE;
+
+        /**
+         * Check if is the oposite move
+         * 
+         * @param move0
+         * @param move1
+         * @return true if is the oposite move, otherwise false
+         */
+        public static boolean isOpositeMove(Move move0, Move move1) {
+            switch (move0) {
+            case UP:
+                if (move1.equals(DOWN))
+                    return true;
+                break;
+            case DOWN:
+                if (move1.equals(UP))
+                    return true;
+                break;
+            case RIGHT:
+                if (move1.equals(LEFT))
+                    return true;
+                break;
+            case LEFT:
+                if (move1.equals(RIGHT))
+                    return true;
+                break;
+            default:
+                return true;
+            }
+            return false;
+        }
     }
 
     private ciberIF cif;
