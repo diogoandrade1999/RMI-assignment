@@ -62,9 +62,9 @@ public class ClientC1 extends Client {
         // warning fix position
         else if (this.irSensor1 > 5.0 || this.irSensor2 > 5.0)
             if (this.irSensor1 > this.irSensor2)
-                this.getCiberIF().DriveMotors(+0.15, +0.05);
+                this.getCiberIF().DriveMotors(+0.15, 0);
             else
-                this.getCiberIF().DriveMotors(+0.05, +0.15);
+                this.getCiberIF().DriveMotors(0, +0.15);
 
         // fix position
         else if (this.irSensor1 > 3.3 || this.irSensor2 > 3.3) {
