@@ -23,7 +23,8 @@ public abstract class Client {
 
     /**
      * Client Constructor
-     * @param args command line arguments
+     * 
+     * @param args         command line arguments
      * @param sensorsAngle angle of the sensors
      */
     public Client(String[] args, double[] sensorsAngle) {

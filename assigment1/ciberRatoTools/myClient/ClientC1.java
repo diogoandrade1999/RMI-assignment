@@ -9,7 +9,11 @@ public class ClientC1 extends Client {
     private int ground, countLaps, lastTarget;
     private boolean inGround, turnAround;
 
-    // Cronstructor
+    /**
+     * Client Constructor
+     * 
+     * @param args command line arguments
+     */
     public ClientC1(String[] args) {
         super(args, null);
         this.lastTime = 0;

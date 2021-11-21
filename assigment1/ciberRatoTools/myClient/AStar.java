@@ -13,7 +13,6 @@ public class AStar {
     private Node initialNode;
     private Node finalNode;
 
-    // Constructor
     /**
      * A* Algorithm Constructor
      * 

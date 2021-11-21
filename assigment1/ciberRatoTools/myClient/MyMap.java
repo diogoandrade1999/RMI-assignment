@@ -13,9 +13,9 @@ public class MyMap {
     public static final int CELLCOLS = 28;
     private char[][] labMap;
 
-   /**
-    * Map Constructor
-    */
+    /**
+     * Map Constructor
+     */
     public MyMap() {
         this.labMap = new char[CELLROWS * 2 - 1][CELLCOLS * 2 - 1];
 
