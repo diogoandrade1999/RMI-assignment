@@ -181,9 +181,9 @@ public class ClientC3 extends ClientC2 {
                 // get path between targets
                 List<Node> subPath;
                 if (t0 < t1)
-                    subPath = this.pathBetweenTargets.get(t0 + "" + t1);
+                    subPath = new ArrayList<>(this.pathBetweenTargets.get(t0 + "" + t1));
                 else {
-                    subPath = this.pathBetweenTargets.get(t1 + "" + t0);
+                    subPath = new ArrayList<>(this.pathBetweenTargets.get(t1 + "" + t0));
                     Collections.reverse(subPath);
                 }
 
