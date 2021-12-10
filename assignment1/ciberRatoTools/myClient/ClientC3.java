@@ -107,7 +107,8 @@ public class ClientC3 extends ClientC2 {
                 List<Node> path = aStar.findPath(this.getLasMove());
 
                 // possible better path is small than better path founded
-                if (bestSubPath.get(bestSubPath.size() - 1).getFCost() < path.get(path.size() - 1).getFCost()) {
+                //if (bestSubPath.get(bestSubPath.size() - 1).getFCost() < path.get(path.size() - 1).getFCost()) {
+                if (bestSubPath.size() < path.size()) {
                     System.out.println("There may be a better path between targets " + i + " and " + j);
                     this.pathBetweenTargets = null;
 
@@ -167,9 +168,14 @@ public class ClientC3 extends ClientC2 {
             targetsId += i;
         List<String> permutationsTargets = getAllPermutationsTargets(targetsId);
 
+        int bestPathCost = 0;
+        int bestPathSize = 0;
+
         // get path from all permutations
         for (int i = 0; i < permutationsTargets.size() - 1; i++) {
             List<List<Node>> path = new ArrayList<>();
+            int pathCost = 0;
+            int pathSize = 0;
 
             // add target 0 to beginning and end
             String seqTarget = "0" + permutationsTargets.get(i) + "0";
@@ -191,15 +197,26 @@ public class ClientC3 extends ClientC2 {
                 if (j != 0)
                     subPath.remove(0);
 
+                // add sub path cost
+                //pathCost += subPath.get(subPath.size() - 1).getFCost();
+
+                // add sub path size
+                pathSize += subPath.size();
+
                 // actual path is worst than actual path
-                if (this.bestPath != null && path.size() > this.bestPath.size())
+                //if (this.bestPath != null && pathCost > bestPathCost)
+                if (this.bestPath != null && pathSize > bestPathSize)
                     break;
                 path.add(subPath);
             }
 
             // if path founded is better than before
-            if (this.bestPath == null || path.size() < this.bestPath.size())
+            //if (this.bestPath == null || pathCost < bestPathCost) {
+            if (this.bestPath == null || pathSize < bestPathSize) {
                 this.bestPath = path;
+                //bestPathCost = pathCost;
+                bestPathSize = pathSize;
+            }
         }
     }
 
