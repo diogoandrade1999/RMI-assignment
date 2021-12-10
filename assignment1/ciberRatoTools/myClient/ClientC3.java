@@ -99,12 +99,12 @@ public class ClientC3 extends ClientC2 {
                 // look for possible better path
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, nodeI, nodeJ);
                 aStar.setBlocks(this.getMyMap().getLabMap(), MyMap.BLOCKERS_WALLS);
-                List<Node> bestSubPath = aStar.findPath(this.getLasMove());
+                List<Node> bestSubPath = aStar.findPath(this.getLastMove());
 
                 // look for better path
                 aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, nodeI, nodeJ);
                 aStar.setBlocks(this.getMyMap().getLabMap(), MyMap.BLOCKERS_ALL);
-                List<Node> path = aStar.findPath(this.getLasMove());
+                List<Node> path = aStar.findPath(this.getLastMove());
 
                 // possible better path is small than better path founded
                 //if (bestSubPath.get(bestSubPath.size() - 1).getFCost() < path.get(path.size() - 1).getFCost()) {
@@ -168,13 +168,13 @@ public class ClientC3 extends ClientC2 {
             targetsId += i;
         List<String> permutationsTargets = getAllPermutationsTargets(targetsId);
 
-        int bestPathCost = 0;
+        //int bestPathCost = 0;
         int bestPathSize = 0;
 
         // get path from all permutations
         for (int i = 0; i < permutationsTargets.size() - 1; i++) {
             List<List<Node>> path = new ArrayList<>();
-            int pathCost = 0;
+            //int pathCost = 0;
             int pathSize = 0;
 
             // add target 0 to beginning and end

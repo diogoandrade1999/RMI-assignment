@@ -11,7 +11,7 @@ public class ClientC2 extends Client {
     private final double initGpsX, initGpsY;
     private double irSensor0, irSensor1, irSensor2, irSensor3, compass, gpsX, gpsY;
     private int actualPosX, actualPosY, nextPosX, nextPosY;
-    private Move actualMove, nextMove, lasMove;
+    private Move actualMove, nextMove, lastMove;
     private Stack<Tuple<Integer, Integer>> posToView;
     private Queue<Tuple<Integer, Integer>> listNextPos;
     private MyMap myMap;
@@ -42,7 +42,7 @@ public class ClientC2 extends Client {
         this.nextPosY = 0;
         this.actualMove = Move.NONE;
         this.nextMove = Move.NONE;
-        this.lasMove = Move.NONE;
+        this.lastMove = Move.NONE;
         this.posToView = new Stack<>();
         this.listNextPos = new LinkedList<>();
         this.myMap = new MyMap();
@@ -63,8 +63,8 @@ public class ClientC2 extends Client {
         return this.inGoalPos;
     }
 
-    public Move getLasMove() {
-        return this.lasMove;
+    public Move getLastMove() {
+        return this.lastMove;
     }
 
     @Override
@@ -248,7 +248,7 @@ public class ClientC2 extends Client {
         }
 
         // pass next move to actual move
-        this.lasMove = this.actualMove;
+        this.lastMove = this.actualMove;
         this.actualMove = this.nextMove;
         this.nextMove = Move.NONE;
     }
@@ -312,7 +312,7 @@ public class ClientC2 extends Client {
                 // apply A*
                 AStar aStar = new AStar(MyMap.CELLROWS * 2 - 1, MyMap.CELLCOLS * 2 - 1, initialNode, finalNode);
                 aStar.setBlocks(this.myMap.getLabMap(), MyMap.BLOCKERS_ALL);
-                List<Node> path = aStar.findPath(this.lasMove);
+                List<Node> path = aStar.findPath(this.lastMove);
 
                 if (path.size() > 0) {
                     // if this position has the close path from actual position
