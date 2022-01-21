@@ -50,20 +50,20 @@ public class MyMap {
     public void addObstacle(int xPos, int yPos, Client.Move move) {
         this.updateMap(xPos, yPos, 'X');
         switch (move) {
-        case UP:
-            this.updateMap(xPos, yPos + 1, '-');
-            break;
-        case DOWN:
-            this.updateMap(xPos, yPos - 1, '-');
-            break;
-        case LEFT:
-            this.updateMap(xPos - 1, yPos, '|');
-            break;
-        case RIGHT:
-            this.updateMap(xPos + 1, yPos, '|');
-            break;
-        default:
-            break;
+            case UP:
+                this.updateMap(xPos, yPos + 1, '-');
+                break;
+            case DOWN:
+                this.updateMap(xPos, yPos - 1, '-');
+                break;
+            case LEFT:
+                this.updateMap(xPos - 1, yPos, '|');
+                break;
+            case RIGHT:
+                this.updateMap(xPos + 1, yPos, '|');
+                break;
+            default:
+                break;
         }
     }
 
@@ -77,20 +77,20 @@ public class MyMap {
     public void addFree(int xPos, int yPos, Client.Move move) {
         this.updateMap(xPos, yPos, 'X');
         switch (move) {
-        case UP:
-            this.updateMap(xPos, yPos + 1, 'X');
-            break;
-        case DOWN:
-            this.updateMap(xPos, yPos - 1, 'X');
-            break;
-        case LEFT:
-            this.updateMap(xPos - 1, yPos, 'X');
-            break;
-        case RIGHT:
-            this.updateMap(xPos + 1, yPos, 'X');
-            break;
-        default:
-            break;
+            case UP:
+                this.updateMap(xPos, yPos + 1, 'X');
+                break;
+            case DOWN:
+                this.updateMap(xPos, yPos - 1, 'X');
+                break;
+            case LEFT:
+                this.updateMap(xPos - 1, yPos, 'X');
+                break;
+            case RIGHT:
+                this.updateMap(xPos + 1, yPos, 'X');
+                break;
+            default:
+                break;
         }
     }
 
@@ -104,24 +104,24 @@ public class MyMap {
      */
     public boolean checkFreePos(int xPos, int yPos, Client.Move move) {
         switch (move) {
-        case UP:
-            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == 'X')
-                return true;
-            break;
-        case DOWN:
-            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == 'X')
-                return true;
-            break;
-        case LEFT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == 'X')
-                return true;
-            break;
-        case RIGHT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == 'X')
-                return true;
-            break;
-        default:
-            break;
+            case UP:
+                if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == 'X')
+                    return true;
+                break;
+            case DOWN:
+                if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == 'X')
+                    return true;
+                break;
+            case LEFT:
+                if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == 'X')
+                    return true;
+                break;
+            case RIGHT:
+                if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == 'X')
+                    return true;
+                break;
+            default:
+                break;
         }
         return false;
     }
@@ -136,24 +136,24 @@ public class MyMap {
      */
     public boolean checkObstaclePos(int xPos, int yPos, Client.Move move) {
         switch (move) {
-        case UP:
-            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == '-')
-                return true;
-            break;
-        case DOWN:
-            if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == '-')
-                return true;
-            break;
-        case LEFT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == '|')
-                return true;
-            break;
-        case RIGHT:
-            if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == '|')
-                return true;
-            break;
-        default:
-            break;
+            case UP:
+                if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == '-')
+                    return true;
+                break;
+            case DOWN:
+                if (this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == '-')
+                    return true;
+                break;
+            case LEFT:
+                if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == '|')
+                    return true;
+                break;
+            case RIGHT:
+                if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == '|')
+                    return true;
+                break;
+            default:
+                break;
         }
         return false;
     }
@@ -161,18 +161,33 @@ public class MyMap {
     /**
      * Check if position on map was mapped
      * 
-     * @param xPos x position on map
-     * @param yPos y position on map
+     * @param xPos      x position on map
+     * @param yPos      y position on map
+     * @param updatePos if is to update cell check using just the walls
      * @return true if was mapped, otherwise false
      */
-    public boolean ckeckedPos(int xPos, int yPos) {
-        if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == ' '
-                || this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == ' '
-                || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == ' '
-                || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == ' ')
+    public boolean ckeckedPos(int xPos, int yPos, boolean updatePos) {
+        if (updatePos) {
+            if (this.labMap[(CELLROWS - 1) + (yPos + 1)][(CELLCOLS - 1) + xPos] == ' '
+                    || this.labMap[(CELLROWS - 1) + (yPos - 1)][(CELLCOLS - 1) + xPos] == ' '
+                    || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos - 1)] == ' '
+                    || this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + (xPos + 1)] == ' ')
+                return false;
+            this.updateMap(xPos, yPos, 'X');
+        } else if (this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] == ' ')
             return false;
-        this.updateMap(xPos, yPos, 'X');
         return true;
+    }
+
+    /**
+     * write the target id on map
+     * 
+     * @param xPos     x position on map
+     * @param yPos     y position on map
+     * @param targetId target id
+     */
+    public void addTargets(int xPos, int yPos, int targetId) {
+        this.labMap[(CELLROWS - 1) + yPos][(CELLCOLS - 1) + xPos] = Character.forDigit(targetId, 10);
     }
 
     /**

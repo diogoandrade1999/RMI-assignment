@@ -8,7 +8,7 @@ public abstract class Client {
 
     /** Client States */
     public static enum State {
-        RUN, FINISH
+        WAIT, RUN, FINISH
     }
 
     /** Client Moves */
@@ -24,24 +24,24 @@ public abstract class Client {
          */
         public static boolean isOpositeMove(Move move0, Move move1) {
             switch (move0) {
-            case UP:
-                if (move1.equals(DOWN))
+                case UP:
+                    if (move1.equals(DOWN))
+                        return true;
+                    break;
+                case DOWN:
+                    if (move1.equals(UP))
+                        return true;
+                    break;
+                case RIGHT:
+                    if (move1.equals(LEFT))
+                        return true;
+                    break;
+                case LEFT:
+                    if (move1.equals(RIGHT))
+                        return true;
+                    break;
+                default:
                     return true;
-                break;
-            case DOWN:
-                if (move1.equals(UP))
-                    return true;
-                break;
-            case RIGHT:
-                if (move1.equals(LEFT))
-                    return true;
-                break;
-            case LEFT:
-                if (move1.equals(RIGHT))
-                    return true;
-                break;
-            default:
-                return true;
             }
             return false;
         }
@@ -61,7 +61,7 @@ public abstract class Client {
     public Client(String[] args, double[] sensorsAngle) {
         this.sensorsAngle = sensorsAngle;
         this.cif = new ciberIF();
-        this.state = State.RUN;
+        this.state = State.WAIT;
         this.commandLineValidate(args);
     }
 
@@ -87,6 +87,8 @@ public abstract class Client {
     public void mainLoop() {
         while (true) {
             this.readSensors();
+            if (this.cif.GetStartButton() && this.state == State.WAIT)
+                this.state = State.RUN;
             this.decide();
         }
     }
@@ -154,22 +156,24 @@ public abstract class Client {
      */
     public void decide() {
         switch (this.state) {
-        case RUN:
-            // runState
-            this.runState();
+            case WAIT:
+                break;
+            case RUN:
+                // runState
+                this.runState();
 
-            // move
-            this.wander();
+                // move
+                this.wander();
 
-            // time out
-            if (this.getCiberIF().GetTime() >= this.cif.GetFinalTime())
-                this.changeState();
-            break;
-        case FINISH:
-            this.getCiberIF().Finish();
-            this.finishState();
-            System.exit(0);
-            break;
+                // time out
+                if (this.getCiberIF().GetTime() >= this.cif.GetFinalTime())
+                    this.changeState();
+                break;
+            case FINISH:
+                this.getCiberIF().Finish();
+                this.finishState();
+                System.exit(0);
+                break;
         }
     }
 
