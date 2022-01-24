@@ -216,8 +216,10 @@ public class ClientC4 extends Client {
             // on top of a target
             if (this.ground != -1)
                 // found new target
-                if (!this.grounds.containsKey(this.ground))
+                if (!this.grounds.containsKey(this.ground)) {
                     this.grounds.put(this.ground, this.actualPos);
+                    this.myMap.addTargets(this.actualPos.x, this.actualPos.y, this.ground);
+                }
 
             // backup draw map
             this.myMap.exportMap(this.getFilename() + ".map");
@@ -235,10 +237,6 @@ public class ClientC4 extends Client {
             this.getBestPath();
 
         System.out.println("Time: " + this.getCiberIF().GetTime());
-
-        // add targets to map
-        for (int targetId : this.grounds.keySet())
-            this.myMap.addTargets(this.grounds.get(targetId).x, this.grounds.get(targetId).y, targetId);
 
         this.myMap.exportMap(this.getFilename() + ".map");
         this.exportPath(this.getFilename() + ".path");
